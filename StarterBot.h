@@ -4,8 +4,6 @@
 
 #include <BWAPI.h>
 
-
-
 class StarterBot
 {
     MapTools m_mapTools;
@@ -33,8 +31,13 @@ public:
 	void onUnitHide(BWAPI::Unit unit);
 	void onUnitRenegade(BWAPI::Unit unit);
 
-	//自己加的
+	//update
 	void initialStrategy();
 	void build();
-	
+	void train();
+	void check();
+	void upgrade();
+	bool send1WorkerToGas();
+	void setScout(BWAPI::Unit unit);
+	void sendScout();
 };

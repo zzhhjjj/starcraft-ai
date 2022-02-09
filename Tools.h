@@ -23,4 +23,8 @@ namespace Tools
 
     void DrawUnitHealthBars();
     void DrawHealthBar(BWAPI::Unit unit, double ratio, BWAPI::Color color, int yOffset);
+
+    //update
+    bool train_unit(BWAPI::UnitType type);
+    bool upgrade(BWAPI::UpgradeType type);
 }

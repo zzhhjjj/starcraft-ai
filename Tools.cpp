@@ -1,4 +1,5 @@
 #include "Tools.h"
+#include "map.h"
 
 BWAPI::Unit Tools::GetClosestUnitTo(BWAPI::Position p, const BWAPI::Unitset& units)
 {
@@ -43,6 +44,7 @@ BWAPI::Unit Tools::GetUnitOfType(BWAPI::UnitType type)
         // if the unit is of the correct type, and it actually has been constructed, return it
         if (unit->getType() == type && unit->isCompleted())
         {
+            if (unit->getType().isWorker() && unit->isMoving()) { continue; }
             return unit;
         }
     }
@@ -118,7 +120,7 @@ void Tools::DrawUnitBoundingBoxes()
 }
 
 void Tools::SmartRightClick(BWAPI::Unit unit, BWAPI::Unit target)
-{// 如果与上一次right click,就忽略
+{
     // if there's no valid unit, ignore the command
     if (!unit || !target) { return; }
 
@@ -231,4 +233,30 @@ void Tools::DrawHealthBar(BWAPI::Unit unit, double ratio, BWAPI::Color color, in
     {
         BWAPI::Broodwar->drawLineMap(BWAPI::Position(i, hpTop), BWAPI::Position(i, hpBottom), BWAPI::Colors::Black);
     }
+}
+
+
+//update
+//YutongMENG ：train a unit of type type
+bool Tools::train_unit(BWAPI::UnitType type) {
+
+    BWAPI::UnitType builderType = type.whatBuilds().first;
+
+    // Get a unit that we own that is of the given type so it can build
+    // If we can't find a valid builder unit, then we have to cancel the building
+    BWAPI::Unit producer = Tools::GetUnitOfType(builderType);
+    if (!producer) { return false; }
+
+    return producer->train(type);
+}
+bool Tools::upgrade(BWAPI::UpgradeType type) {
+    // Get the type of unit that is required to build the desired building
+    BWAPI::UnitType upgraderType = type.whatUpgrades();
+
+    // Get a unit that we own that is of the given type so it can build
+    // If we can't find a valid builder unit, then we have to cancel the building
+    BWAPI::Unit upgrader = Tools::GetUnitOfType(upgraderType);
+    if (!upgrader) { return false; }
+
+    return upgrader->upgrade(type);
 }
