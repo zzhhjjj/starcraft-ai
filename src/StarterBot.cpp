@@ -1,11 +1,15 @@
-#include "StarterBot.h"
+ï»¿#include "StarterBot.h"
 #include "Tools.h"
 #include "MapTools.h"
+#include "map.h"
 
-//×Ô¼º¼ÓµÄ
+//update
 #include <queue>
+#include<list>
 using namespace std;
-typedef pair<int, BWAPI::UnitType> p;
+typedef pair<int, BWAPI::UnitType> p; //the moment to build unit
+typedef pair<int, BWAPI::UpgradeType> q; //the moment to upgrade
+BWAPI::Unit m_scout = nullptr;
 
 struct cmp {
     bool operator()(const p p1, const p p2) {
@@ -13,7 +17,16 @@ struct cmp {
     }
 };
 
+struct cmp1 {
+    bool operator()(const q p1, const q p2) {
+        return p1.first > p2.first;
+    }
+};
+
 priority_queue<p, vector<p>, cmp> building_order;
+priority_queue<p, vector<p>, cmp> train_order;
+priority_queue<q, vector<q>, cmp1> upgrade_order;
+//end update
 
 StarterBot::StarterBot()
 {
@@ -33,8 +46,11 @@ void StarterBot::onStart()
     // Call MapTools OnStart
     m_mapTools.onStart();
 
-    //³õÊ¼»¯²ßÂÔ
+    //update
     initialStrategy();
+    //end update
+
+    BWEM::Map::Instance().Initialize(BWAPI::BroodwarPtr);
 }
 
 // Called whenever the game ends and tells you if you won or not
@@ -46,13 +62,12 @@ void StarterBot::onEnd(bool isWinner)
 // Called on each frame of the game
 void StarterBot::onFrame()
 {
-    
     // Update our MapTools information
     m_mapTools.onFrame();
 
     // Send our idle workers to mine minerals so they don't just stand there
     sendIdleWorkersToMinerals();
-
+        
     // Train more workers so we can gather more income
     trainAdditionalWorkers();
 
@@ -65,8 +80,13 @@ void StarterBot::onFrame()
     // Draw some relevent information to the screen to help us debug the bot
     drawDebugInformation();
 
-    //×Ô¼º¼ÓµÄ
+    //update
     build();
+    train();
+    upgrade();
+    check();
+    if (BWAPI::Broodwar->self()->supplyUsed() > 16) { StarterBot::sendScout(); }
+    //end update
 }
 
 // Send our idle workers to mine minerals so they don't just stand there
@@ -78,7 +98,7 @@ void StarterBot::sendIdleWorkersToMinerals()
     for (auto& unit : myUnits)
     {
         // Check the unit type, if it is an idle worker, then we want to send it somewhere
-        if (unit->getType().isWorker() && unit->isIdle())// Èç¹ûÈÃÅ©ÃñÒ»Ö±µã¿ó£¬¾Í»áÊ²Ã´¶¼²»¸É
+        if (unit->getType().isWorker() && unit->isIdle())
         {
             // Get the closest mineral to this worker unit
             BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(unit, BWAPI::Broodwar->getMinerals());
@@ -111,16 +131,14 @@ void StarterBot::buildAdditionalSupply()
 {
     // Get the amount of supply supply we currently have unused
     const int unusedSupply = Tools::GetTotalSupply(true) - BWAPI::Broodwar->self()->supplyUsed();
-    //°üÀ¨»¹Ã»ÓÐ½¨ºÃµÄsupplyµÄÈË¿Ú(supply)£¬ÒÔ¼°Èç¹ûÓÐÅ©ÃñÕýÔÚÈ¥½¨£¬µ«»¹Ã»¿ªÊ¼½¨  
-    
+
     // If we have a sufficient amount of supply, we don't need to do anything
-    //Êµ¼Ê³Ë2
     if (unusedSupply >= 2) { return; }
 
     // Otherwise, we are going to build a supply provider
     const BWAPI::UnitType supplyProviderType = BWAPI::Broodwar->self()->getRace().getSupplyProvider();
 
-    const bool startedBuilding = Tools::BuildBuilding(supplyProviderType);// ·µ»Ø½¨ÖþÊÇ·ñ¿ªÊ¼½¨Ôì
+    const bool startedBuilding = Tools::BuildBuilding(supplyProviderType);
     if (startedBuilding)
     {
         BWAPI::Broodwar->printf("Started Building %s", supplyProviderType.getName().c_str());
@@ -192,27 +210,154 @@ void StarterBot::onUnitRenegade(BWAPI::Unit unit)
 	
 }
 
-// ×Ô¼ºÐ´µÄ
 
-//½¨ÖþË³Ðò
-//²ßÂÔ³õÊ¼»¯£¬ 10ÈË¿Ú±øÓª£¬ 14ÈË¿Ú Cybernetics Core£¬ 29ÈË¿Ú Nexus
+//update
+bool StarterBot::send1WorkerToGas()
+{
+    // Let's send all of our starting workers to the closest mineral to them
+    // First we need to loop over all of the units that we (BWAPI::Broodwar->self()) own
+    const BWAPI::Unit assimilator = Tools::GetUnitOfType(BWAPI::UnitTypes::Protoss_Assimilator);
+    if (assimilator == nullptr) { return false; }
+
+    const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
+    for (auto& unit : myUnits)
+    {
+        // Check the unit type, if it is an idle worker, then we want to send it somewhere
+        if (unit->getType().isWorker())// ï¿½ï¿½ï¿½ï¿½ï¿½Å©ï¿½ï¿½Ò»Ö±ï¿½ï¿½ó£¬¾Í»ï¿½Ê²Ã´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        {
+            unit->rightClick(assimilator);
+            return true;
+        }
+    }
+}
+
 void StarterBot::initialStrategy() {
     building_order.push(make_pair(20, BWAPI::UnitTypes::Protoss_Gateway));
-    building_order.push(make_pair(28, BWAPI::UnitTypes::Protoss_Cybernetics_Core));
-    building_order.push(make_pair(58, BWAPI::UnitTypes::Protoss_Nexus));
+    building_order.push(make_pair(22, BWAPI::UnitTypes::Protoss_Cybernetics_Core));
+    building_order.push(make_pair(26, BWAPI::UnitTypes::Protoss_Assimilator));
+
+    train_order.push(make_pair(26, BWAPI::UnitTypes::Protoss_Zealot));
+    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
+
+    upgrade_order.push(make_pair(40, BWAPI::UpgradeTypes::Singularity_Charge));
 }
-//½¨Ôì
+//ï¿½ï¿½ï¿½ï¿½
 void StarterBot::build() {
     const int supply = BWAPI::Broodwar->self()->supplyUsed();
     if (!building_order.empty()) {
         const p b1 = building_order.top();
-        if (supply == b1.first) {//ÈË¿Ú¹»ÁË
-            const bool startedBuilding = Tools::BuildBuilding(b1.second);// ·µ»Ø½¨ÖþÊÇ·ñ¿ªÊ¼½¨Ôì
+        if (supply >= b1.first) {//ï¿½Ë¿Ú¹ï¿½ï¿½ï¿½
+            const bool startedBuilding = Tools::BuildBuilding(b1.second);// ï¿½ï¿½ï¿½Ø½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½
             if (startedBuilding)
             {
                 BWAPI::Broodwar->printf("Started Building %s", BWAPI::UnitTypes::Protoss_Gateway.getName().c_str());
+                building_order.pop(); //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Óµï¿½
             }
-            building_order.pop(); //Õâ¸ö½¨Öþ´Ó¶ÓÁÐÖÐÈÓµô
+
+        }
+    }
+}
+
+
+void StarterBot::train() {
+    const int supply = BWAPI::Broodwar->self()->supplyUsed();
+    if (!train_order.empty()) {
+        const p b1 = train_order.top();
+        if (supply >= b1.first) {//ï¿½Ë¿Ú¹ï¿½ï¿½ï¿½
+
+            const bool startedtrain = Tools::train_unit(b1.second);// ï¿½ï¿½ï¿½Ø½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½
+            if (startedtrain)
+            {
+                BWAPI::Broodwar->printf("Started train %s", b1.second.getName().c_str());
+                train_order.pop(); //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Óµï¿½
+            }
+
+        }
+    }
+}
+
+
+void StarterBot::upgrade() {
+    const int supply = BWAPI::Broodwar->self()->supplyUsed();
+    if (!upgrade_order.empty()) {
+        const q b1 = upgrade_order.top();
+        if (supply >= b1.first) {//ï¿½Ë¿Ú¹ï¿½ï¿½ï¿½
+            const bool startedupgrade = Tools::upgrade(b1.second);// ï¿½ï¿½ï¿½Ø½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½
+            if (startedupgrade)
+            {
+                BWAPI::Broodwar->printf("Started upgrade %s", b1.second.getName().c_str());
+                upgrade_order.pop(); //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Óµï¿½
+            }
+
+        }
+    }
+}
+
+void StarterBot::check() {
+    if (Tools::GetUnitOfType(BWAPI::UnitTypes::Protoss_Assimilator) != nullptr) {
+        const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
+        int workers_on_assmilator = 0;
+        for (auto& unit : myUnits)
+        {
+            // Check the unit type, if it is an idle worker, then we want to send it somewhere
+            if (unit->getType().isWorker() && unit->getTarget() != nullptr && unit->getTarget()->getType() == BWAPI::UnitTypes::Protoss_Assimilator)// ï¿½ï¿½ï¿½ï¿½ï¿½Å©ï¿½ï¿½Ò»Ö±ï¿½ï¿½ó£¬¾Í»ï¿½Ê²Ã´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+            {
+                workers_on_assmilator++;
+            }
+        }
+        if (workers_on_assmilator < 3) {
+            send1WorkerToGas();
+            workers_on_assmilator++;
+            if (workers_on_assmilator >= 3) { return; }
+            //for (auto& unit : myUnits)
+            //{
+            //    // Check the unit type, if it is an idle worker, then we want to send it somewhere
+            //    if (unit->getType().isWorker())// ï¿½ï¿½ï¿½ï¿½ï¿½Å©ï¿½ï¿½Ò»Ö±ï¿½ï¿½ó£¬¾Í»ï¿½Ê²Ã´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+            //    {
+            //        // Get the closest mineral to this worker unit
+            //        BWAPI::Unit assimilator = Tools::GetUnitOfType(BWAPI::UnitTypes::Protoss_Assimilator);
+
+            //        // If a valid mineral was found, right click it with the unit in order to start harvesting
+            //        unit->rightClick(assimilator);
+            //        workers_on_assmilator++;
+            //        if (workers_on_assmilator >= 3) { return; }
+            //    }
+
+            //}
+        }
+
+    }
+}
+
+void StarterBot::setScout(BWAPI::Unit unit) 
+{
+    if (m_scout)
+    {
+        return;
+    }
+    m_scout = unit;
+}
+
+void StarterBot::sendScout()
+{
+    if (!m_scout||!m_scout->exists())
+    {
+        const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
+        for (auto& unit : myUnits)
+        {
+            if (unit->getType().isWorker()) 
+            {
+                StarterBot::setScout(unit);
+            }
+        }
+    }
+
+    for (auto location : BWAPI::Broodwar->getStartLocations())
+    {
+        if (!BWAPI::Broodwar->isExplored(location))
+        {
+            m_scout->move(BWAPI::Position(location));
+            return;
         }
     }
 }

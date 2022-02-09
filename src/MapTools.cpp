@@ -12,7 +12,7 @@ MapTools::MapTools()
 }
 
 void MapTools::onStart()
-{   //µØÍ¼ÐÅÏ¢
+{
     m_width          = BWAPI::Broodwar->mapWidth();
     m_height         = BWAPI::Broodwar->mapHeight();
     m_walkable       = Grid<int>(m_width, m_height, 1);
