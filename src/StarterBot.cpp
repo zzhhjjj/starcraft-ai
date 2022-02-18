@@ -2,7 +2,7 @@
 #include "Tools.h"
 #include "MapTools.h"
 #include "map.h"
-
+#include "data.h"
 //update
 #include <queue>
 #include<list>
@@ -10,6 +10,9 @@ using namespace std;
 typedef pair<int, BWAPI::UnitType> p; //the moment to build unit
 typedef pair<int, BWAPI::UpgradeType> q; //the moment to upgrade
 BWAPI::Unit m_scout = nullptr;
+
+
+Data m_data;
 
 struct cmp {
     bool operator()(const p p1, const p p2) {
@@ -45,6 +48,8 @@ void StarterBot::onStart()
 
     // Call MapTools OnStart
     m_mapTools.onStart();
+
+    m_data = Data();
 
     //update
     initialStrategy();
@@ -94,17 +99,18 @@ void StarterBot::sendIdleWorkersToMinerals()
 {
     // Let's send all of our starting workers to the closest mineral to them
     // First we need to loop over all of the units that we (BWAPI::Broodwar->self()) own
-    const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
-    for (auto& unit : myUnits)
+    for (auto& unit : m_data.m_workers)
     {
         // Check the unit type, if it is an idle worker, then we want to send it somewhere
-        if (unit->getType().isWorker() && unit->isIdle())
+        if ( unit->isIdle())
         {
             // Get the closest mineral to this worker unit
             BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(unit, BWAPI::Broodwar->getMinerals());
 
             // If a valid mineral was found, right click it with the unit in order to start harvesting
             if (closestMineral) { unit->rightClick(closestMineral); }
+            m_data.m_workerJobMap[unit] = m_data.Minerals;
+            m_data.m_workerMineralMap[unit] = closestMineral;
         }
     }
 }
@@ -180,6 +186,11 @@ void StarterBot::onSendText(std::string text)
 // so this will trigger when you issue the build command for most units
 void StarterBot::onUnitCreate(BWAPI::Unit unit)
 { 
+    if (unit->getType() == m_data.worker_type) {
+        m_data.m_workers.insert(unit);
+        m_data.m_workerJobMap[unit] = m_data.Idle;
+        m_data.m_workerDepotMap[unit] = Tools::GetClosestUnitTo(unit, m_data.m_depots);
+    }
 	
 }
 

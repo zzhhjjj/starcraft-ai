@@ -48,9 +48,25 @@ BWAPI::Unit Tools::GetUnitOfType(BWAPI::UnitType type)
             return unit;
         }
     }
-
     // If we didn't find a valid unit to return, make sure we return nullptr
     return nullptr;
+}
+
+BWAPI::Unitset Tools::GetAllUnitOfType(BWAPI::UnitType type)
+{
+    // For each unit that we own
+    BWAPI::Unitset return_units = BWAPI::Unitset();
+    for (auto& unit : BWAPI::Broodwar->self()->getUnits())
+    {
+        // if the unit is of the correct type, and it actually has been constructed, return it
+        if (unit->getType() == type && unit->isCompleted())
+        {
+            if (unit->getType().isWorker() && unit->isMoving()) { continue; }
+            return_units.insert(unit);
+        }
+    }
+    // If we didn't find a valid unit to return, make sure we return nullptr
+    return return_units
 }
 
 BWAPI::Unit Tools::GetDepot()
@@ -237,7 +253,7 @@ void Tools::DrawHealthBar(BWAPI::Unit unit, double ratio, BWAPI::Color color, in
 
 
 //update
-//YutongMENG £ºtrain a unit of type type
+//YutongMENG ï¿½ï¿½train a unit of type type
 bool Tools::train_unit(BWAPI::UnitType type) {
 
     BWAPI::UnitType builderType = type.whatBuilds().first;
@@ -271,3 +287,4 @@ bool Tools::upgrade(BWAPI::UpgradeType type) {
 
     return upgrader->upgrade(type);
 }
+
