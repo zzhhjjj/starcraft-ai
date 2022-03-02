@@ -2,7 +2,7 @@
 #include "Tools.h"
 #include "MapTools.h"
 #include "map.h"
-#include "data.h"
+
 //update
 #include <queue>
 #include<list>
@@ -12,7 +12,7 @@ typedef pair<int, BWAPI::UpgradeType> q; //the moment to upgrade
 BWAPI::Unit m_scout = nullptr;
 
 
-Data* m_data=new Data() ;
+
 
 struct cmp {
     bool operator()(const p p1, const p p2) {
@@ -67,6 +67,7 @@ void StarterBot::onEnd(bool isWinner)
 // Called on each frame of the game
 void StarterBot::onFrame()
 {
+    
     // Update our MapTools information
     m_mapTools.onFrame();
 
@@ -99,7 +100,7 @@ void StarterBot::sendIdleWorkersToMinerals()
 {
     // Let's send all of our starting workers to the closest mineral to them
     // First we need to loop over all of the units that we (BWAPI::Broodwar->self()) own
-    for (auto& unit : m_data->m_workers)
+    for (auto& unit : m_data.m_workers)
     {
         // Check the unit type, if it is an idle worker, then we want to send it somewhere
         if ( unit->isIdle())
@@ -109,8 +110,8 @@ void StarterBot::sendIdleWorkersToMinerals()
 
             // If a valid mineral was found, right click it with the unit in order to start harvesting
             if (closestMineral) { unit->rightClick(closestMineral); }
-            m_data->m_workerJobMap[unit] = m_data->Minerals;
-            m_data->m_workerMineralMap[unit] = closestMineral;
+            m_data.m_workerJobMap[unit] = m_data.Minerals;
+            m_data.m_workerMineralMap[unit] = closestMineral;
         }
     }
 }
@@ -185,11 +186,24 @@ void StarterBot::onSendText(std::string text)
 // Units are created in buildings like barracks before they are visible, 
 // so this will trigger when you issue the build command for most units
 void StarterBot::onUnitCreate(BWAPI::Unit unit)
-{ 
-    if (unit->getType() == m_data->worker_type) {
-        m_data->m_workers.insert(unit);
-        m_data->m_workerJobMap[unit] = m_data->Idle;
-        m_data->m_workerDepotMap[unit] = Tools::GetClosestUnitTo(unit, m_data->m_depots);
+{   
+    
+    
+    if (unit->getType() == m_data.worker_type) {
+        BWAPI::Broodwar->printf("%d build!! ", unit->getType().getName());
+       
+        m_data.m_workers.insert(unit);
+        m_data.m_workerJobMap[unit] = m_data.Idle;
+        m_data.m_workerDepotMap[unit] = Tools::GetClosestUnitTo(unit, m_data.m_depots);
+    }
+
+    if (unit->getType() == BWAPI::UnitTypes::Protoss_Assimilator) {
+        BWAPI::Broodwar->printf("Assimilator build!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ");
+        for (int i = 0; i < 3; i++) {
+            BWAPI::Unit gaser = m_data.get_a_miner(unit->getPosition());
+            gaser->rightClick(unit);
+        }
+
     }
 	
 }
@@ -223,29 +237,29 @@ void StarterBot::onUnitRenegade(BWAPI::Unit unit)
 
 
 //update
-bool StarterBot::send1WorkerToGas()
-{
-    // Let's send all of our starting workers to the closest mineral to them
-    // First we need to loop over all of the units that we (BWAPI::Broodwar->self()) own
-    const BWAPI::Unit assimilator = Tools::GetUnitOfType(BWAPI::UnitTypes::Protoss_Assimilator);
-    if (assimilator == nullptr) { return false; }
-
-    const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
-    for (auto& unit : myUnits)
-    {
-        // Check the unit type, if it is an idle worker, then we want to send it somewhere
-        if (unit->getType().isWorker())// �����ũ��һֱ��󣬾ͻ�ʲô������
-        {
-            unit->rightClick(assimilator);
-            return true;
-        }
-    }
-}
+//bool StarterBot::send1WorkerToGas()
+//{
+//    // Let's send all of our starting workers to the closest mineral to them
+//    // First we need to loop over all of the units that we (BWAPI::Broodwar->self()) own
+//    const BWAPI::Unit assimilator = Tools::GetUnitOfType(BWAPI::UnitTypes::Protoss_Assimilator);
+//    if (assimilator == nullptr) { return false; }
+//
+//    const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
+//    for (auto& unit : myUnits)
+//    {
+//        // Check the unit type, if it is an idle worker, then we want to send it somewhere
+//        if (unit->getType().isWorker())// �����ũ��һֱ��󣬾ͻ�ʲô������
+//        {
+//            unit->rightClick(assimilator);
+//            return true;
+//        }
+//    }
+//}
 
 void StarterBot::initialStrategy() {
     building_order.push(make_pair(20, BWAPI::UnitTypes::Protoss_Gateway));
     building_order.push(make_pair(22, BWAPI::UnitTypes::Protoss_Cybernetics_Core));
-    building_order.push(make_pair(26, BWAPI::UnitTypes::Protoss_Assimilator));
+    building_order.push(make_pair(24, BWAPI::UnitTypes::Protoss_Assimilator));
 
     train_order.push(make_pair(26, BWAPI::UnitTypes::Protoss_Zealot));
     train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
@@ -306,20 +320,20 @@ void StarterBot::upgrade() {
 
 void StarterBot::check() {
     if (Tools::GetUnitOfType(BWAPI::UnitTypes::Protoss_Assimilator) != nullptr) {
-        const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
-        int workers_on_assmilator = 0;
-        for (auto& unit : myUnits)
-        {
-            // Check the unit type, if it is an idle worker, then we want to send it somewhere
-            if (unit->getType().isWorker() && unit->getTarget() != nullptr && unit->getTarget()->getType() == BWAPI::UnitTypes::Protoss_Assimilator)// �����ũ��һֱ��󣬾ͻ�ʲô������
-            {
-                workers_on_assmilator++;
-            }
-        }
-        if (workers_on_assmilator < 3) {
+        //const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
+        //int workers_on_assmilator = 0;
+        //for (auto& unit : myUnits)
+        //{
+        //    // Check the unit type, if it is an idle worker, then we want to send it somewhere
+        //    if (unit->getType().isWorker() && unit->getTarget() != nullptr && unit->getTarget()->getType() == BWAPI::UnitTypes::Protoss_Assimilator)// �����ũ��һֱ��󣬾ͻ�ʲô������
+        //    {
+        //        workers_on_assmilator++;
+        //    }
+        //}
+       /* if (workers_on_assmilator < 3) {
             send1WorkerToGas();
             workers_on_assmilator++;
-            if (workers_on_assmilator >= 3) { return; }
+            if (workers_on_assmilator >= 3) { return; }*/
             //for (auto& unit : myUnits)
             //{
             //    // Check the unit type, if it is an idle worker, then we want to send it somewhere
@@ -335,7 +349,7 @@ void StarterBot::check() {
             //    }
 
             //}
-        }
+        //}
 
     }
 }

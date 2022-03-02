@@ -5,7 +5,7 @@ class Data {
 public:
 
 	enum WorkerJob { Minerals, Gas, Build, Combat, Idle, Repair, Move, Scout, Default };
-    const BWAPI::UnitType depot_type = BWAPI::Broodwar->self()->getRace().getResourceDepot();
+    const BWAPI::UnitType depot_type = BWAPI::UnitTypes::Protoss_Nexus;
     const BWAPI::UnitType worker_type = BWAPI::UnitTypes::Protoss_Probe;
 
 
@@ -30,6 +30,8 @@ public:
 public:
 
     Data();
+
+    void update();
 
     void workerDestroyed(BWAPI::Unit unit);
 

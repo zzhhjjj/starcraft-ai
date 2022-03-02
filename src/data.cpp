@@ -16,6 +16,18 @@ Data::Data() {
  
 }
 
+void Data::update() {
+    m_workers = Tools::GetAllUnitOfType(worker_type);
+    m_depots = Tools::GetAllUnitOfType(depot_type);
+    m_minerals = BWAPI::Broodwar->getMinerals();
+
+    for (auto worker : m_workers) {
+        m_workerJobMap[worker] = Idle;
+        m_workerDepotMap[worker] = Tools::GetClosestUnitTo(worker, m_depots);
+    }
+
+}
+
 void Data::workerDestroyed(BWAPI::Unit unit)
 {
     if (!unit) { return; }
