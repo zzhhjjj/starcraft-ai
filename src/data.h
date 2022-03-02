@@ -14,9 +14,9 @@ public:
     BWAPI::Unitset m_minerals;
 
     std::map<BWAPI::Unit, enum WorkerJob>   m_workerJobMap;
-    std::map<BWAPI::Unit, BWAPI::Unit>      m_workerMineralMap;
+    /*std::map<BWAPI::Unit, BWAPI::Unit>      m_workerMineralMap;
     std::map<BWAPI::Unit, BWAPI::Unit>      m_workerDepotMap;
-    std::map<BWAPI::Unit, BWAPI::Unit>      m_workerRefineryMap;
+    std::map<BWAPI::Unit, BWAPI::Unit>      m_workerRefineryMap;*/
     //std::map<BWAPI::Unit, BWAPI::Unit>      m_workerRepairMap;
     //std::map<BWAPI::Unit, WorkerMoveData>   m_workerMoveMap;
     std::map<BWAPI::Unit, BWAPI::UnitType>  m_workerBuildingTypeMap;
@@ -39,6 +39,6 @@ public:
 
     BWAPI::Unit get_a_miner(BWAPI::Position pos);
 
-
+    BWAPI::Unit get_a_miner();
 
 };
