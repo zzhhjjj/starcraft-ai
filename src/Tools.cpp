@@ -66,7 +66,7 @@ BWAPI::Unitset Tools::GetAllUnitOfType(BWAPI::UnitType type)
         }
     }
     // If we didn't find a valid unit to return, make sure we return nullptr
-    return return_units
+    return return_units;
 }
 
 BWAPI::Unit Tools::GetDepot()
