@@ -279,7 +279,9 @@ void StarterBot::onUnitRenegade(BWAPI::Unit unit)
 //}
 
 void StarterBot::initialStrategy() {
+    building_order.push(make_pair(15, BWAPI::UnitTypes::Protoss_Gateway));
     building_order.push(make_pair(20, BWAPI::UnitTypes::Protoss_Gateway));
+    
     building_order.push(make_pair(28, BWAPI::UnitTypes::Protoss_Cybernetics_Core));
     building_order.push(make_pair(22, BWAPI::UnitTypes::Protoss_Assimilator));
 
@@ -307,11 +309,11 @@ void StarterBot::build() {
     if (!building_order.empty()) {
         const p b1 = building_order.top();
         if (supply >= b1.first) {//�˿ڹ���
-            const bool startedBuilding = Tools::BuildBuilding(b1.second);// ���ؽ����Ƿ�ʼ����
+            const bool startedBuilding = Tools::BuildBuilding(b1.second);
             if (startedBuilding)
             {
                 BWAPI::Broodwar->printf("Started Building %s", BWAPI::UnitTypes::Protoss_Gateway.getName().c_str());
-                building_order.pop(); //��������Ӷ������ӵ�
+                building_order.pop(); 
             }
 
         }

@@ -43,10 +43,27 @@ BWAPI::Unit Tools::GetUnitOfType(BWAPI::UnitType type)
     for (auto& unit : BWAPI::Broodwar->self()->getUnits())
     {
         // if the unit is of the correct type, and it actually has been constructed, return it
+        if (type.isBuilding()) {  // we want to split the traing task between same kind of building 
+            if (unit->getType() == type &&  !unit->isTraining()) // prioritize not used building 
+            {
+                return unit;
+            }
+        }
+        
+
         if (unit->getType() == type && unit->isCompleted())
         {
             if (unit->getType().isWorker() && unit->isMoving()) { continue; }
             return unit;
+        }
+    }
+
+    for (auto& unit : BWAPI::Broodwar->self()->getUnits()) {
+        if (type.isBuilding()) {  // we want to split the traing task between same kind of building 
+            if (unit->getType() == type )// if all the building is occupied
+            {
+                return unit;
+            }
         }
     }
     // If we didn't find a valid unit to return, make sure we return nullptr
