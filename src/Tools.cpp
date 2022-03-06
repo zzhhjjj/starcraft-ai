@@ -84,8 +84,6 @@ bool Tools::BuildBuilding(BWAPI::UnitType type)
 
     // Get a unit that we own that is of the given type so it can build
     // If we can't find a valid builder unit, then we have to cancel the building
-
-        
     BWAPI::Unit builder = Tools::GetUnitOfType(builderType);
     if (!builder) { return false; }
 

@@ -224,18 +224,20 @@ void StarterBot::onUnitComplete(BWAPI::Unit unit)
 void StarterBot::onUnitShow(BWAPI::Unit unit)
 { 
 
-  
-
-    if ( unit->getPlayer()->isEnemy(unit->getPlayer()) == true) {
-        BWAPI::Broodwar->printf("find enenmy ");
-        if (BWAPI::Broodwar->enemy()){
-            m_data.enemy_race = BWAPI::Broodwar->enemy()->getRace();
-        }
-        if (unit->getType() == m_data.enemy_race.getResourceDepot()) {
-            m_data.enemy_base = unit;
-            BWAPI::Broodwar->printf("find enenmy base!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ");
-        }
+    if ( unit->getPlayer()->isEnemy(BWAPI::Broodwar->self()) == true) {
         
+        if (unit->getType().isBuilding() && m_data.detecte_enemy == false) {
+            m_data.enemy_race = BWAPI::Broodwar->enemy()->getRace();
+            m_data.enemy_building = unit;
+
+            BWAPI::Position enemy_building_pos = unit->getPosition();
+            BWAPI::Position scouter_pos = m_scout->getPosition();
+            BWAPI::Position scouter_pos = m_scout->getPosition();
+            m_data.front_pylon_pos = BWAPI::Position(2* scouter_pos.x- enemy_building_pos.x, 2 * scouter_pos.y - enemy_building_pos.y);
+
+            BWAPI::Broodwar->printf("find enenmy base!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ");
+ 
+        }  
     }
 }
 
