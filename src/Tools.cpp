@@ -1,6 +1,7 @@
 #include "Tools.h"
 #include "map.h"
 #include "data.h"
+#include "BuildingPlaceManager.h"
 
 BWAPI::Unit Tools::GetClosestUnitTo(BWAPI::Position p, const BWAPI::Unitset& units)
 {

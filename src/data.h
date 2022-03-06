@@ -19,7 +19,7 @@ public:
     BWAPI::Unitset m_minerals;
     int number_of_gaser;
 
-
+    int current_minus_mineral=400;
 
     std::map<BWAPI::Unit, enum WorkerJob>   m_workerJobMap;
     /*std::map<BWAPI::Unit, BWAPI::Unit>      m_workerMineralMap;
@@ -48,6 +48,8 @@ public:
     BWAPI::Unit get_a_miner(BWAPI::Position pos);
 
     BWAPI::Unit get_a_miner();
+
+    int current_mineral();
 
 
 };
