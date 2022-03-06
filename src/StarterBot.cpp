@@ -91,7 +91,7 @@ void StarterBot::onFrame()
     train();
     upgrade();
     check();
-    if (BWAPI::Broodwar->self()->supplyUsed() > 16) { StarterBot::sendScout(); }
+    if (BWAPI::Broodwar->self()->supplyUsed() > 10) { StarterBot::sendScout(); }
     //end update
 }
 
@@ -223,7 +223,20 @@ void StarterBot::onUnitComplete(BWAPI::Unit unit)
 // This is usually triggered when units appear from fog of war and become visible
 void StarterBot::onUnitShow(BWAPI::Unit unit)
 { 
-	
+
+  
+
+    if ( unit->getPlayer()->isEnemy(unit->getPlayer()) == true) {
+        BWAPI::Broodwar->printf("find enenmy ");
+        if (BWAPI::Broodwar->enemy()){
+            m_data.enemy_race = BWAPI::Broodwar->enemy()->getRace();
+        }
+        if (unit->getType() == m_data.enemy_race.getResourceDepot()) {
+            m_data.enemy_base = unit;
+            BWAPI::Broodwar->printf("find enenmy base!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ");
+        }
+        
+    }
 }
 
 // Called whenever a unit gets hidden, with a pointer to the destroyed unit
@@ -377,4 +390,7 @@ void StarterBot::sendScout()
         }
     }
 }
+
+
+
 

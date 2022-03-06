@@ -8,10 +8,15 @@ public:
     const BWAPI::UnitType depot_type = BWAPI::UnitTypes::Protoss_Nexus;
     const BWAPI::UnitType worker_type = BWAPI::UnitTypes::Protoss_Probe;
 
+    BWAPI::Race enemy_race ;
+    BWAPI::Unit enemy_base = nullptr;
 
 	BWAPI::Unitset m_workers;
 	BWAPI::Unitset m_depots;
     BWAPI::Unitset m_minerals;
+    int number_of_gaser;
+
+
 
     std::map<BWAPI::Unit, enum WorkerJob>   m_workerJobMap;
     /*std::map<BWAPI::Unit, BWAPI::Unit>      m_workerMineralMap;
@@ -40,5 +45,6 @@ public:
     BWAPI::Unit get_a_miner(BWAPI::Position pos);
 
     BWAPI::Unit get_a_miner();
+
 
 };
