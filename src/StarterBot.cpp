@@ -2,7 +2,7 @@
 #include "Tools.h"
 #include "MapTools.h"
 #include "map.h"
-
+#include "MeleeManager.h"
 //update
 #include <queue>
 #include<list>
@@ -91,7 +91,11 @@ void StarterBot::onFrame()
     train();
     upgrade();
     check();
-    if (BWAPI::Broodwar->self()->supplyUsed() > 16) { StarterBot::sendScout(); }
+    if (BWAPI::Broodwar->self()->supplyUsed() > 10) { StarterBot::sendScout(); }
+
+    MeleeManager m;
+    BWAPI::Unitset targets = BWAPI::Broodwar->enemy()->getUnits();
+    m.assignTargetsOld(targets);
     //end update
 }
 
@@ -111,7 +115,7 @@ void StarterBot::sendIdleWorkersToMinerals()
             // If a valid mineral was found, right click it with the unit in order to start harvesting
             if (closestMineral) { unit->rightClick(closestMineral); }
             m_data.m_workerJobMap[unit] = m_data.Minerals;
-            m_data.m_workerMineralMap[unit] = closestMineral;
+            /*m_data.m_workerMineralMap[unit] = closestMineral;*/
         }
     }
 }
@@ -140,7 +144,7 @@ void StarterBot::buildAdditionalSupply()
     const int unusedSupply = Tools::GetTotalSupply(true) - BWAPI::Broodwar->self()->supplyUsed();
 
     // If we have a sufficient amount of supply, we don't need to do anything
-    if (unusedSupply >= 2) { return; }
+    if (unusedSupply >= 4) { return; }
 
     // Otherwise, we are going to build a supply provider
     const BWAPI::UnitType supplyProviderType = BWAPI::Broodwar->self()->getRace().getSupplyProvider();
@@ -188,37 +192,55 @@ void StarterBot::onSendText(std::string text)
 void StarterBot::onUnitCreate(BWAPI::Unit unit)
 {   
     
-    
+
     if (unit->getType() == m_data.worker_type) {
-        BWAPI::Broodwar->printf("%d build!! ", unit->getType().getName());
        
         m_data.m_workers.insert(unit);
         m_data.m_workerJobMap[unit] = m_data.Idle;
-        m_data.m_workerDepotMap[unit] = Tools::GetClosestUnitTo(unit, m_data.m_depots);
+        /*m_data.m_workerDepotMap[unit] = Tools::GetClosestUnitTo(unit, m_data.m_depots);*/
     }
 
-    if (unit->getType() == BWAPI::UnitTypes::Protoss_Assimilator) {
-        BWAPI::Broodwar->printf("Assimilator build!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ");
-        for (int i = 0; i < 3; i++) {
-            BWAPI::Unit gaser = m_data.get_a_miner(unit->getPosition());
-            gaser->rightClick(unit);
-        }
-
-    }
+    
 	
 }
 
 // Called whenever a unit finished construction, with a pointer to the unit
 void StarterBot::onUnitComplete(BWAPI::Unit unit)
 {
-	
+    if (unit->getType().getID() == BWAPI::UnitTypes::Protoss_Assimilator.getID()) {
+        for (int i = 0; i < 3; i++) {
+            BWAPI::Unit gaser = m_data.get_a_miner(unit->getPosition());
+            if (gaser != nullptr) {
+                gaser->rightClick(unit);
+                m_data.m_workerJobMap[gaser] = m_data.Gas;
+            }
+            else {
+                BWAPI::Broodwar->printf("can't find worker!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ");
+            }
+            
+        }
+
+    }
 }
 
 // Called whenever a unit appears, with a pointer to the destroyed unit
 // This is usually triggered when units appear from fog of war and become visible
 void StarterBot::onUnitShow(BWAPI::Unit unit)
 { 
-	
+
+  
+
+    if ( unit->getPlayer()->isEnemy(unit->getPlayer()) == true) {
+        BWAPI::Broodwar->printf("find enenmy ");
+        if (BWAPI::Broodwar->enemy()){
+            m_data.enemy_race = BWAPI::Broodwar->enemy()->getRace();
+        }
+        if (unit->getType() == m_data.enemy_race.getResourceDepot()) {
+            m_data.enemy_base = unit;
+            BWAPI::Broodwar->printf("find enenmy base!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ");
+        }
+        
+    }
 }
 
 // Called whenever a unit gets hidden, with a pointer to the destroyed unit
@@ -258,12 +280,25 @@ void StarterBot::onUnitRenegade(BWAPI::Unit unit)
 
 void StarterBot::initialStrategy() {
     building_order.push(make_pair(20, BWAPI::UnitTypes::Protoss_Gateway));
-    building_order.push(make_pair(22, BWAPI::UnitTypes::Protoss_Cybernetics_Core));
-    building_order.push(make_pair(24, BWAPI::UnitTypes::Protoss_Assimilator));
+    building_order.push(make_pair(28, BWAPI::UnitTypes::Protoss_Cybernetics_Core));
+    building_order.push(make_pair(22, BWAPI::UnitTypes::Protoss_Assimilator));
 
-    train_order.push(make_pair(26, BWAPI::UnitTypes::Protoss_Zealot));
+    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
+    
+    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
+    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
+    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
+    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
+    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
     train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
-
+    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
+    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
+    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
+    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
+    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
+    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
+    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
+    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
     upgrade_order.push(make_pair(40, BWAPI::UpgradeTypes::Singularity_Charge));
 }
 //����
@@ -319,39 +354,9 @@ void StarterBot::upgrade() {
 }
 
 void StarterBot::check() {
-    if (Tools::GetUnitOfType(BWAPI::UnitTypes::Protoss_Assimilator) != nullptr) {
-        //const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
-        //int workers_on_assmilator = 0;
-        //for (auto& unit : myUnits)
-        //{
-        //    // Check the unit type, if it is an idle worker, then we want to send it somewhere
-        //    if (unit->getType().isWorker() && unit->getTarget() != nullptr && unit->getTarget()->getType() == BWAPI::UnitTypes::Protoss_Assimilator)// �����ũ��һֱ��󣬾ͻ�ʲô������
-        //    {
-        //        workers_on_assmilator++;
-        //    }
-        //}
-       /* if (workers_on_assmilator < 3) {
-            send1WorkerToGas();
-            workers_on_assmilator++;
-            if (workers_on_assmilator >= 3) { return; }*/
-            //for (auto& unit : myUnits)
-            //{
-            //    // Check the unit type, if it is an idle worker, then we want to send it somewhere
-            //    if (unit->getType().isWorker())// �����ũ��һֱ��󣬾ͻ�ʲô������
-            //    {
-            //        // Get the closest mineral to this worker unit
-            //        BWAPI::Unit assimilator = Tools::GetUnitOfType(BWAPI::UnitTypes::Protoss_Assimilator);
+    
 
-            //        // If a valid mineral was found, right click it with the unit in order to start harvesting
-            //        unit->rightClick(assimilator);
-            //        workers_on_assmilator++;
-            //        if (workers_on_assmilator >= 3) { return; }
-            //    }
-
-            //}
-        //}
-
-    }
+    
 }
 
 void StarterBot::setScout(BWAPI::Unit unit) 
@@ -361,20 +366,23 @@ void StarterBot::setScout(BWAPI::Unit unit)
         return;
     }
     m_scout = unit;
+    m_data.m_workerJobMap[unit] = m_data.Scout;
 }
 
 void StarterBot::sendScout()
 {
     if (!m_scout||!m_scout->exists())
     {
-        const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
+        /*const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
         for (auto& unit : myUnits)
         {
             if (unit->getType().isWorker()) 
             {
                 StarterBot::setScout(unit);
             }
-        }
+        }*/
+        StarterBot::setScout(m_data.get_a_miner());
+
     }
 
     for (auto location : BWAPI::Broodwar->getStartLocations())
@@ -386,4 +394,7 @@ void StarterBot::sendScout()
         }
     }
 }
+
+
+
 

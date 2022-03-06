@@ -10,7 +10,7 @@ Data::Data() {
 
     for (auto worker : m_workers) {
         m_workerJobMap[worker] = Idle;
-        m_workerDepotMap[worker] = Tools::GetClosestUnitTo(worker, m_depots);
+       /* m_workerDepotMap[worker] = Tools::GetClosestUnitTo(worker, m_depots);*/
     }
 
  
@@ -23,7 +23,7 @@ void Data::update() {
 
     for (auto worker : m_workers) {
         m_workerJobMap[worker] = Idle;
-        m_workerDepotMap[worker] = Tools::GetClosestUnitTo(worker, m_depots);
+        /*m_workerDepotMap[worker] = Tools::GetClosestUnitTo(worker, m_depots);*/
     }
 
 }
@@ -46,7 +46,7 @@ void Data::clearPreviousJob(BWAPI::Unit unit)
     {
         /*m_depotWorkerCount[m_workerDepotMap[unit]] -= 1;*/
 
-        m_workerDepotMap.erase(unit);
+        /*m_workerDepotMap.erase(unit);*/
 
         // remove a worker from this unit's assigned mineral patch
         //addToMineralPatch(m_workerMineralAssignment[unit], -1);
@@ -57,7 +57,7 @@ void Data::clearPreviousJob(BWAPI::Unit unit)
     else if (previousJob == Gas)
     {
         //m_refineryWorkerCount[m_workerRefineryMap[unit]] -= 1;
-        m_workerRefineryMap.erase(unit);
+        /*m_workerRefineryMap.erase(unit);*/
     }
     else if (previousJob == Build)
     {
@@ -92,11 +92,36 @@ enum Data::WorkerJob Data::getWorkerJob(BWAPI::Unit unit)
 
 BWAPI::Unit Data::get_a_miner(BWAPI::Position pos) {
 
-    BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(pos, BWAPI::Broodwar->getMinerals());
-    for (auto x : m_workerMineralMap) {
-        if (x.second == closestMineral){
+    /*BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(pos, BWAPI::Broodwar->getMinerals());*/
+    /*if (closestMineral == nullptr) {
+        BWAPI::Broodwar->printf("Can't find mineral!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ");
+
+    }*/
+    int k = 0;
+    for (auto x : m_workerJobMap) {
+        k = k + 1;
+        if (x.second == Minerals){
             return x.first;
         }
+        BWAPI::Broodwar->printf("worker%d doesn't work on this mineral",k);
+    }
+    return nullptr;
+}
+
+BWAPI::Unit Data::get_a_miner() {
+
+    /*BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(pos, BWAPI::Broodwar->getMinerals());*/
+    /*if (closestMineral == nullptr) {
+        BWAPI::Broodwar->printf("Can't find mineral!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ");
+
+    }*/
+    int k = 0;
+    for (auto x : m_workerJobMap) {
+        k = k + 1;
+        if (x.second == Minerals) {
+            return x.first;
+        }
+        BWAPI::Broodwar->printf("worker%d doesn't work on this mineral", k);
     }
     return nullptr;
 }
