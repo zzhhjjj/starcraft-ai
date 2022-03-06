@@ -50,12 +50,14 @@ BWAPI::Unit Tools::GetUnitOfType(BWAPI::UnitType type)
             }
         }
         
-
-        if (unit->getType() == type && unit->isCompleted())
-        {
-            if (unit->getType().isWorker() && unit->isMoving()) { continue; }
-            return unit;
+        else{
+            if (unit->getType() == type && unit->isCompleted())
+            {
+                if (unit->getType().isWorker() && unit->isMoving()) { continue; }
+                return unit;
+            }
         }
+        
     }
 
     for (auto& unit : BWAPI::Broodwar->self()->getUnits()) {
