@@ -10,6 +10,22 @@ MeleeManager::MeleeManager()
 
 }
 
+// attck enemy base when we have certains 
+void MeleeManager::attackBase(BWAPI::Position enemy_base, int units_supply) {
+    if (enemy_base.x == 1000 && enemy_base.y == 1002) {//didn't find ennemy base
+        return;
+    }
+    else {
+        if (BWAPI::Broodwar->self()->supplyUsed() < units_supply) {
+            return;
+        }
+        else {
+            const BWAPI::Unitset my_units = getCombatUnits();
+            attackLocation(my_units, enemy_base, 50, false);
+        }
+    }
+}
+
 // attack the enemies in a certain location with radius R. On the mean time decide if we attach workers.
 void MeleeManager::attackLocation(BWAPI::Unitset my_units,BWAPI::Position center, int radius, bool includeWorkers)
 {

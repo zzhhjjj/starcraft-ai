@@ -40,7 +40,7 @@ StarterBot::StarterBot()
 void StarterBot::onStart()
 {
     // Set our BWAPI options here    
-	BWAPI::Broodwar->setLocalSpeed(10);
+	BWAPI::Broodwar->setLocalSpeed(30);
     BWAPI::Broodwar->setFrameSkip(0);
     
     // Enable the flag that tells BWAPI top let users enter input while bot plays
@@ -91,11 +91,14 @@ void StarterBot::onFrame()
     train();
     upgrade();
     check();
-    if (BWAPI::Broodwar->self()->supplyUsed() > 10) { StarterBot::sendScout(); }
+    if (BWAPI::Broodwar->self()->supplyUsed() > 16) { StarterBot::sendScout(); }
 
     MeleeManager m;
     BWAPI::Unitset targets = BWAPI::Broodwar->enemy()->getUnits();
     m.assignTargetsOld(targets);
+
+    m.attackBase(m_data.enemy_base,  100);
+
     //end update
 }
 
@@ -145,7 +148,10 @@ void StarterBot::buildAdditionalSupply()
     const int unusedSupply = Tools::GetTotalSupply(true) - BWAPI::Broodwar->self()->supplyUsed();
 
     // If we have a sufficient amount of supply, we don't need to do anything
-    if (unusedSupply >= 4 || m_data.current_mineral()<100  ) { return; }
+    // early stage
+    if (  (unusedSupply >= 6 && BWAPI::Broodwar->self()->supplyUsed()<=26 ) || m_data.current_mineral()<100  ) { return; }
+    // after
+    if ( unusedSupply >= 10  || m_data.current_mineral() < 100) { return; }
 
     // Otherwise, we are going to build a supply provider
     const BWAPI::UnitType supplyProviderType = BWAPI::Broodwar->self()->getRace().getSupplyProvider();
@@ -302,6 +308,18 @@ void StarterBot::initialStrategy() {
     train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
     train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
     train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
+    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
+    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
+    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
+    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
+    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
+    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
+    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
+    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
+    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
+    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
+    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
+    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
     train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
     train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
     train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));

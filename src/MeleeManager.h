@@ -22,4 +22,5 @@ class MeleeManager
         void getUnits(BWAPI::Unitset& units, BWAPI::Position center, int radius, bool ourUnits, bool oppUnits);
         void SmartAttackUnit(BWAPI::Unit attacker, BWAPI::Unit target);
         void attackLocation(BWAPI::Unitset my_units, BWAPI::Position center, int radius, bool includeWorkers);
+        void MeleeManager::attackBase(BWAPI::Position enemy_base, int units_supply);
 };
