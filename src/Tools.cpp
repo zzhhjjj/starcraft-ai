@@ -92,22 +92,7 @@ BWAPI::Unitset Tools::GetAllUnitOfType(BWAPI::UnitType type)
     return return_units;
 }
 
-BWAPI::Unitset Tools::GetAllUnitOfType(BWAPI::UnitType type)
-{
-    // For each unit that we own
-    BWAPI::Unitset return_units = BWAPI::Unitset();
-    for (auto& unit : BWAPI::Broodwar->self()->getUnits())
-    {
-        // if the unit is of the correct type, and it actually has been constructed, return it
-        if (unit->getType() == type && unit->isCompleted())
-        {
-            if (unit->getType().isWorker() && unit->isMoving()) { continue; }
-            return_units.insert(unit);
-        }
-    }
-    // If we didn't find a valid unit to return, make sure we return nullptr
-    return return_units;
-}
+
 
 BWAPI::Unit Tools::GetDepot()
 {
@@ -118,22 +103,6 @@ BWAPI::Unit Tools::GetDepot()
 // Attempt tp construct a building of a given type 
 
 
-    // Get a unit that we own that is of the given type so it can build
-    // If we can't find a valid builder unit, then we have to cancel the building
-    BWAPI::Unit builder = Tools::GetUnitOfType(builderType);
-    if (!builder) { return false; }
-
-    // Get a location that we want to build the building next to
-    //BWAPI::TilePosition desiredPos = BWAPI::Broodwar->self()->getStartLocation();
-    BuildingPlaceManager bpm = BuildingPlaceManager::BuildingPlaceManager();
-    BWAPI::TilePosition desiredPos = bpm.getDesiredPosition(type);
-
-    // Ask BWAPI for a building location near the desired position for the type
-    int maxBuildRange = 64;
-    bool buildingOnCreep = type.requiresCreep();
-    BWAPI::TilePosition buildPos = BWAPI::Broodwar->getBuildLocation(type, desiredPos, maxBuildRange, buildingOnCreep);
-    return builder->build(type, buildPos);
-}
 
 void Tools::DrawUnitCommands()
 {

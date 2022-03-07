@@ -2,7 +2,7 @@
 #include "Tools.h"
 #include "MapTools.h"
 #include "map.h"
-#include "MeleeManager.h"
+
 //update
 #include <queue>
 #include<list>
@@ -102,8 +102,9 @@ void StarterBot::onFrame()
     MeleeManager m;
     BWAPI::Unitset targets = BWAPI::Broodwar->enemy()->getUnits();
     m.assignTargetsOld(targets);
-
-    m.attackBase(m_data.enemy_base,  100);
+    if (m_data.detecte_enemy) {
+        m.attackBase(m_data.enemy_building->getPosition(), 100);
+    }
 
     //end update
 }

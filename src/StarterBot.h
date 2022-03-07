@@ -3,7 +3,7 @@
 #include "MapTools.h"
 #include "data.h"
 #include <BWAPI.h>
-
+#include "MeleeManager.h"
 
 
 class StarterBot
