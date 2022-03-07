@@ -1,3 +1,6 @@
+
+#pragma once
+
 #include <BWAPI.h>
 #include "Tools.h"
 class Data {
@@ -10,10 +13,16 @@ public:
 
     BWAPI::Race enemy_race ;
     BWAPI::Unit enemy_building ;
-    BWAPI::Position enemy_base = BWAPI::Position(1000,1002);
-    BWAPI::Position front_pylon_pos;
+
+    BWAPI::TilePosition front_pylon_pos;
     bool detecte_enemy = false;
-    
+
+
+    bool front_pylon = false;
+    int front_gateway=0;
+    bool base_forge = false;
+    int front_canon=0;
+
 
 	BWAPI::Unitset m_workers;
 	BWAPI::Unitset m_depots;
@@ -51,5 +60,6 @@ public:
     BWAPI::Unit get_a_miner();
 
     int current_mineral();
+
 
 };

@@ -121,7 +121,7 @@ BWAPI::Unit Data::get_a_miner() {
         if (x.second == Minerals) {
             return x.first;
         }
-        BWAPI::Broodwar->printf("worker%d doesn't work on this mineral", k);
+
     }
     return nullptr;
 }
