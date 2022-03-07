@@ -3,7 +3,6 @@
 #include "data.h"
 #include "BuildingPlaceManager.h"
 
-#include "BuildingPlaceManager.h"
 
 BWAPI::Unit Tools::GetClosestUnitTo(BWAPI::Position p, const BWAPI::Unitset& units)
 {
@@ -101,8 +100,6 @@ BWAPI::Unit Tools::GetDepot()
 }
 
 // Attempt tp construct a building of a given type 
-
-
 
 void Tools::DrawUnitCommands()
 {

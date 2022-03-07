@@ -10,6 +10,7 @@ class StarterBot
 {
     MapTools m_mapTools;
 	Data m_data;
+	MeleeManager m_meleeManager;
 
 	BWAPI::Unit m_scout = nullptr;
 

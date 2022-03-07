@@ -3,7 +3,7 @@
 #include "MapTools.h"
 #include "Tools.h"
 
-// ×Ô¼ºµÄ
+// è‡ªå·±çš„
 
 MeleeManager::MeleeManager()
 {
@@ -11,17 +11,43 @@ MeleeManager::MeleeManager()
 }
 
 // attck enemy base when we have certains 
+
+
+void MeleeManager::defendBase() {
+    int defense_radius = 800;
+    const BWAPI::Unitset my_units = getCombatUnits();
+   
+    BWAPI::Unitset Ennemyunits;
+    getUnits(Ennemyunits, BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation()), 30, false, true); // return ennemies
+    for (auto& unit : my_units)// all enemies near our units
+    {
+        BWAPI::Unit u = unit;
+        
+        getUnits(Ennemyunits, u->getPosition(), defense_radius, false, true);
+    }
+    
+    assignTargetsOld(Ennemyunits);
+    
+}
+
+
 void MeleeManager::attackBase(BWAPI::Position enemy_base, int units_supply) {
+    int attack_radius = 400;
+
     if (enemy_base.x == 1000 && enemy_base.y == 1002) {//didn't find ennemy base
         return;
     }
     else {
-        if (BWAPI::Broodwar->self()->supplyUsed() < units_supply) {
+
+        if (BWAPI::Broodwar->self()->supplyUsed() < units_supply) {// not enough units.
+
             return;
         }
         else {
             const BWAPI::Unitset my_units = getCombatUnits();
-            attackLocation(my_units, enemy_base, 50, false);
+
+            attackLocation(my_units, enemy_base, attack_radius, false);
+
         }
     }
 }
@@ -29,10 +55,8 @@ void MeleeManager::attackBase(BWAPI::Position enemy_base, int units_supply) {
 // attack the enemies in a certain location with radius R. On the mean time decide if we attach workers.
 void MeleeManager::attackLocation(BWAPI::Unitset my_units,BWAPI::Position center, int radius, bool includeWorkers)
 {
-    for (auto& unit : my_units)//move toward the location
-    {
-        unit->move(center);
-    }
+
+
     
     BWAPI::Unitset Ennemyunits;
     getUnits(Ennemyunits, center, radius, false, true); // return ennemies
@@ -56,7 +80,14 @@ void MeleeManager::attackLocation(BWAPI::Unitset my_units,BWAPI::Position center
     else {
         assignTargetsOld(Ennemyunits);
     }
-    
+
+    if (Ennemyunits.empty()) { // not ennemies aroud us, move to the location
+        for (auto& unit : my_units)//move toward the location
+        {
+            unit->move(center);
+        }
+    }
+
 }
 
 
@@ -76,7 +107,7 @@ void MeleeManager::assignTargetsOld(const BWAPI::Unitset& targets)//ennemy units
     {
         // conditions for targeting
         if (!(target->getType().isFlyer()) &&
-            !(target->isLifted()) && //ÈË×å½¨Öş£¬ÇÒ·ÉÆğÀ´ÁË
+            !(target->isLifted()) && //äººæ—å»ºç­‘ï¼Œä¸”é£èµ·æ¥äº†
             !(target->getType() == BWAPI::UnitTypes::Zerg_Larva) &&
             !(target->getType() == BWAPI::UnitTypes::Zerg_Egg) &&
             target->isVisible())
@@ -150,7 +181,7 @@ std::pair<BWAPI::Unit, BWAPI::Unit> MeleeManager::findClosestUnitPair(const BWAP
 }
 
 // get a target for the meleeUnit to attack
-BWAPI::Unit MeleeManager::getTarget(BWAPI::Unit meleeUnit, const BWAPI::Unitset& targets)// ×Ô¼º²¿¶Ó£¬µĞÈË²¿¶Ó
+BWAPI::Unit MeleeManager::getTarget(BWAPI::Unit meleeUnit, const BWAPI::Unitset& targets)// è‡ªå·±éƒ¨é˜Ÿï¼Œæ•Œäººéƒ¨é˜Ÿ
 {
     int highPriority = 0;
     double closestDist = std::numeric_limits<double>::infinity();
@@ -179,6 +210,9 @@ int MeleeManager::getAttackPriority(BWAPI::Unit attacker, BWAPI::Unit unit)
 {
     BWAPI::UnitType type = unit->getType();
 
+
+    // some high tech units
+
     if (attacker->getType() == BWAPI::UnitTypes::Protoss_Dark_Templar
         && unit->getType() == BWAPI::UnitTypes::Terran_Missile_Turret
         && (BWAPI::Broodwar->self()->deadUnitCount(BWAPI::UnitTypes::Protoss_Dark_Templar) == 0))
@@ -191,43 +225,58 @@ int MeleeManager::getAttackPriority(BWAPI::Unit attacker, BWAPI::Unit unit)
         return 12;
     }
 
-    // highest priority is something that can attack us or aid in combat
-    if (type == BWAPI::UnitTypes::Terran_Bunker)
+
+    // defensive building 
+    if (type == BWAPI::UnitTypes::Terran_Bunker || type == BWAPI::UnitTypes::Protoss_Photon_Cannon 
+        || type == BWAPI::UnitTypes::Zerg_Sunken_Colony)
     {
-        return 11;
+        return 8;
     }
+    // some special units
     else if (type == BWAPI::UnitTypes::Terran_Medic ||
         (type.groundWeapon() != BWAPI::WeaponTypes::None && !type.isWorker()) ||
-        type == BWAPI::UnitTypes::Terran_Bunker ||
+
         type == BWAPI::UnitTypes::Protoss_High_Templar ||
         type == BWAPI::UnitTypes::Protoss_Reaver ||
         (type.isWorker() ))
     {
         return 10;
     }
-    // next priority is worker
-    else if (type.isWorker())
-    {
+
+    // all other alive units
+    else if ( !type.isBuilding()) {
         return 9;
     }
-    // next is special buildings
+
+    // some special buildings
+
     else if (type == BWAPI::UnitTypes::Zerg_Spawning_Pool)
     {
         return 5;
     }
-    // next is special buildings
+
+    
+
     else if (type == BWAPI::UnitTypes::Protoss_Pylon)
     {
         return 5;
     }
-    // next is buildings that cost gas
-    else if (type.gasPrice() > 0)
+
+
+    else if (type.isWorker())
     {
         return 4;
     }
-    else if (type.mineralPrice() > 0)
+    
+    // next is buildings that cost gas
+    else if (type.gasPrice() > 0)
     {
         return 3;
+    }
+    else if (type.mineralPrice() > 0)
+    {
+        return 2;
+
     }
     // then everything else
     else
@@ -274,16 +323,16 @@ BWAPI::Unitset MeleeManager::getCombatUnits() {
 
 
 //update
-//·µ»ØcenterÖÜÎ§Ò»¶¨°ë¾¶ÄÚµÄµ¥Î»£¬·ÅÔÚUnitsÖĞ
+//è¿”å›centerå‘¨å›´ä¸€å®šåŠå¾„å†…çš„å•ä½ï¼Œæ”¾åœ¨Unitsä¸­
 void MeleeManager::getUnits(BWAPI::Unitset& units, BWAPI::Position center, int radius, bool ourUnits, bool oppUnits)
 {
     const int radiusSq(radius * radius);
 
     if (ourUnits)
     {
-        for (auto& unit : BWAPI::Broodwar->self()->getUnits())//×Ô¼ºµÄµ¥Î»
+        for (auto& unit : BWAPI::Broodwar->self()->getUnits())//è‡ªå·±çš„å•ä½
         {
-            BWAPI::Position d(unit->getPosition() - center); //³õÊ¼»¯position
+            BWAPI::Position d(unit->getPosition() - center); //åˆå§‹åŒ–position
             if (d.x * d.x + d.y * d.y <= radiusSq)
             {
                 if (!units.contains(unit))

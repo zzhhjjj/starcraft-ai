@@ -1,3 +1,4 @@
+
 #include "AttackGroup.h"
 
 void CommandCenter::initial()
@@ -54,4 +55,5 @@ void AttackGroup::update()
 			removeUnit(u);
 		}
 	}
+
 }
