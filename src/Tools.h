@@ -1,6 +1,6 @@
 #pragma once
-
 #include <BWAPI.h>
+
 
 namespace Tools
 {
@@ -15,7 +15,7 @@ namespace Tools
     BWAPI::Unitset GetAllUnitOfType(BWAPI::UnitType type);
     BWAPI::Unit GetDepot();
 
-    bool BuildBuilding( BWAPI::UnitType type);
+    
 
     void DrawUnitBoundingBoxes();
     void DrawUnitCommands();
@@ -31,6 +31,6 @@ namespace Tools
     bool train_unit(BWAPI::UnitType type);
     bool upgrade(BWAPI::UpgradeType type);
 
-    BWAPI::Unit get_a_miner(BWAPI::Position pos);
+   
     
 }
