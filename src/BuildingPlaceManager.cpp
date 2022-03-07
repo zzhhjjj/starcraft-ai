@@ -1,4 +1,3 @@
-
 #include "BuildingPlaceManager.h"
 
 BuildingPlaceManager::BuildingPlaceManager()
@@ -105,5 +104,4 @@ BWAPI::TilePosition BuildingPlaceManager::getDesiredPosition(BWAPI::UnitType typ
         }
     }
     return BWAPI::Broodwar->self()->getStartLocation();
-
 }
