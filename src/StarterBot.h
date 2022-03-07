@@ -3,13 +3,14 @@
 #include "MapTools.h"
 #include "data.h"
 #include <BWAPI.h>
-
+#include "MeleeManager.h"
 
 
 class StarterBot
 {
     MapTools m_mapTools;
 	Data m_data;
+	MeleeManager m_meleeManager;
 
 public:
 

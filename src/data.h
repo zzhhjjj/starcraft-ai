@@ -9,14 +9,18 @@ public:
     const BWAPI::UnitType worker_type = BWAPI::UnitTypes::Protoss_Probe;
 
     BWAPI::Race enemy_race ;
-    BWAPI::Unit enemy_base = nullptr;
+    BWAPI::Unit enemy_building ;
+    BWAPI::Position enemy_base = BWAPI::Position(1000,1002);
+    BWAPI::Position front_pylon_pos;
+    bool detecte_enemy = false;
+    
 
 	BWAPI::Unitset m_workers;
 	BWAPI::Unitset m_depots;
     BWAPI::Unitset m_minerals;
     int number_of_gaser;
 
-
+    int current_minus_mineral=400;
 
     std::map<BWAPI::Unit, enum WorkerJob>   m_workerJobMap;
     /*std::map<BWAPI::Unit, BWAPI::Unit>      m_workerMineralMap;
@@ -46,5 +50,6 @@ public:
 
     BWAPI::Unit get_a_miner();
 
+    int current_mineral();
 
 };
