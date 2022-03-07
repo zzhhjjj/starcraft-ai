@@ -40,7 +40,7 @@ StarterBot::StarterBot()
 void StarterBot::onStart()
 {
     // Set our BWAPI options here    
-	BWAPI::Broodwar->setLocalSpeed(12);
+	BWAPI::Broodwar->setLocalSpeed(10);
     BWAPI::Broodwar->setFrameSkip(0);
     
     // Enable the flag that tells BWAPI top let users enter input while bot plays
@@ -96,7 +96,6 @@ void StarterBot::onFrame()
     MeleeManager m;
     BWAPI::Unitset targets = BWAPI::Broodwar->enemy()->getUnits();
     m.assignTargetsOld(targets);
-    
     //end update
 }
 
@@ -128,7 +127,7 @@ void StarterBot::trainAdditionalWorkers()
     const BWAPI::UnitType workerType = BWAPI::Broodwar->self()->getRace().getWorker();
     const int workersWanted = 20;
     const int workersOwned = Tools::CountUnitsOfType(workerType, BWAPI::Broodwar->self()->getUnits());
-    if (workersOwned < workersWanted)
+    if (workersOwned < workersWanted && m_data.current_mineral()>50)
     {
         // get the unit pointer to my depot
         const BWAPI::Unit myDepot = Tools::GetDepot();
@@ -146,14 +145,15 @@ void StarterBot::buildAdditionalSupply()
     const int unusedSupply = Tools::GetTotalSupply(true) - BWAPI::Broodwar->self()->supplyUsed();
 
     // If we have a sufficient amount of supply, we don't need to do anything
-    if (unusedSupply >= 4) { return; }
+    if (unusedSupply >= 4 || m_data.current_mineral()<100  ) { return; }
 
     // Otherwise, we are going to build a supply provider
     const BWAPI::UnitType supplyProviderType = BWAPI::Broodwar->self()->getRace().getSupplyProvider();
-
+    
     const bool startedBuilding = Tools::BuildBuilding(supplyProviderType);
     if (startedBuilding)
     {
+        m_data.current_minus_mineral += supplyProviderType.mineralPrice();
         BWAPI::Broodwar->printf("Started Building %s", supplyProviderType.getName().c_str());
     }
 }
@@ -230,19 +230,28 @@ void StarterBot::onUnitComplete(BWAPI::Unit unit)
 void StarterBot::onUnitShow(BWAPI::Unit unit)
 { 
 
-  
-
-    if ( unit->getPlayer()->isEnemy(unit->getPlayer()) == true) {
-        BWAPI::Broodwar->printf("find enenmy ");
-        if (BWAPI::Broodwar->enemy()){
-            m_data.enemy_race = BWAPI::Broodwar->enemy()->getRace();
-        }
-        if (unit->getType() == m_data.enemy_race.getResourceDepot()) {
-            m_data.enemy_base = unit;
-            BWAPI::Broodwar->printf("find enenmy base!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ");
-        }
+    if ( unit->getPlayer()->isEnemy(BWAPI::Broodwar->self()) == true) {
         
+        if (unit->getType().isBuilding() && m_data.detecte_enemy == false) {
+            m_data.enemy_race = BWAPI::Broodwar->enemy()->getRace();
+            m_data.enemy_building = unit;
+
+            BWAPI::Position enemy_building_pos = unit->getPosition();
+            BWAPI::Position scouter_pos = m_scout->getPosition();
+            
+            m_data.front_pylon_pos = BWAPI::Position(2* scouter_pos.x- enemy_building_pos.x, 2 * scouter_pos.y - enemy_building_pos.y);
+
+            BWAPI::Broodwar->printf("find enenmy base!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ");
+            m_data.enemy_base = enemy_building_pos;
+            BWAPI::Broodwar->printf("Enemy base at %d, %d", m_data.enemy_base.x, m_data.enemy_base.y);
+        }  
     }
+
+    if (unit->getPlayer()==(BWAPI::Broodwar->self()) && unit->getType().isBuilding()) {
+        BWAPI::Broodwar->printf("Being built%s ", unit->getType().getName().c_str());
+        m_data.current_minus_mineral -= unit->getType().mineralPrice();
+    }
+
 }
 
 // Called whenever a unit gets hidden, with a pointer to the destroyed unit
@@ -281,26 +290,25 @@ void StarterBot::onUnitRenegade(BWAPI::Unit unit)
 //}
 
 void StarterBot::initialStrategy() {
-    building_order.push(make_pair(24, BWAPI::UnitTypes::Protoss_Gateway));
     building_order.push(make_pair(20, BWAPI::UnitTypes::Protoss_Gateway));
-    
-    building_order.push(make_pair(28, BWAPI::UnitTypes::Protoss_Cybernetics_Core));
-    building_order.push(make_pair(22, BWAPI::UnitTypes::Protoss_Assimilator));
+    building_order.push(make_pair(20, BWAPI::UnitTypes::Protoss_Gateway));
+    building_order.push(make_pair(24, BWAPI::UnitTypes::Protoss_Cybernetics_Core));
+    building_order.push(make_pair(2, BWAPI::UnitTypes::Protoss_Assimilator));
 
     train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
     
+    train_order.push(make_pair(20, BWAPI::UnitTypes::Protoss_Zealot));
     train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
     train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
     train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
     train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
-    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
     train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
     train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
     train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
     train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
+    train_order.push(make_pair(20, BWAPI::UnitTypes::Protoss_Dragoon));
     train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
-    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
-    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
+    train_order.push(make_pair(20, BWAPI::UnitTypes::Protoss_Dragoon));
     train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
     train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
     upgrade_order.push(make_pair(40, BWAPI::UpgradeTypes::Singularity_Charge));
@@ -310,12 +318,16 @@ void StarterBot::build() {
     const int supply = BWAPI::Broodwar->self()->supplyUsed();
     if (!building_order.empty()) {
         const p b1 = building_order.top();
-        if (supply >= b1.first) {//�˿ڹ���
-            const bool startedBuilding = Tools::BuildBuilding(b1.second);
+        if (supply >= b1.first && m_data.current_mineral()>b1.second.mineralPrice()) {//�˿ڹ���
+            BWAPI::Broodwar->printf("Want to build %s, mineral:%d...%d", b1.second.getName().c_str(),m_data.current_mineral(),m_data.current_minus_mineral);
+            const bool startedBuilding = Tools::BuildBuilding(b1.second);// ���ؽ����Ƿ�ʼ����
+           
             if (startedBuilding)
             {
+                m_data.current_minus_mineral += b1.second.mineralPrice();
                 BWAPI::Broodwar->printf("Started Building %s", BWAPI::UnitTypes::Protoss_Gateway.getName().c_str());
-                building_order.pop(); 
+                building_order.pop(); //��������Ӷ������ӵ�
+
             }
 
         }
@@ -327,7 +339,7 @@ void StarterBot::train() {
     const int supply = BWAPI::Broodwar->self()->supplyUsed();
     if (!train_order.empty()) {
         const p b1 = train_order.top();
-        if (supply >= b1.first) {//�˿ڹ���
+        if (supply >= b1.first && m_data.current_mineral()>b1.second.mineralPrice()) {//�˿ڹ���
 
             const bool startedtrain = Tools::train_unit(b1.second);// ���ؽ����Ƿ�ʼ����
             if (startedtrain)
@@ -345,7 +357,7 @@ void StarterBot::upgrade() {
     const int supply = BWAPI::Broodwar->self()->supplyUsed();
     if (!upgrade_order.empty()) {
         const q b1 = upgrade_order.top();
-        if (supply >= b1.first) {//�˿ڹ���
+        if (supply >= b1.first && m_data.current_mineral() > b1.second.mineralPrice()) {//�˿ڹ���
             const bool startedupgrade = Tools::upgrade(b1.second);// ���ؽ����Ƿ�ʼ����
             if (startedupgrade)
             {

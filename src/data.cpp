@@ -125,3 +125,8 @@ BWAPI::Unit Data::get_a_miner() {
     }
     return nullptr;
 }
+
+int Data::current_mineral() {
+
+    return  BWAPI::Broodwar->self()->minerals() - current_minus_mineral;
+}
