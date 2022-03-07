@@ -119,6 +119,7 @@ void StarterBot::sendIdleWorkersToMinerals()
             /*m_data.m_workerMineralMap[unit] = closestMineral;*/
         }
     }
+    
 }
 
 // Train more workers so we can gather more income
