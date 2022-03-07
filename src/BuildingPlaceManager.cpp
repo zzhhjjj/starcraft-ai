@@ -93,7 +93,7 @@ BWAPI::TilePosition BuildingPlaceManager::getDesiredPosition(BWAPI::UnitType typ
             if (u->getType() == type) 
             {
                 BWAPI::TilePosition pos = u->getTilePosition();
-                position = BWAPI::TilePosition(pos.x + 16, pos.y);
+                position = BWAPI::TilePosition(pos.x + 4, pos.y);
                 if (position.isValid()) 
                 {
                     return position;

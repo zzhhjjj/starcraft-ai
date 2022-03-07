@@ -1,6 +1,7 @@
 #include "Tools.h"
 #include "map.h"
 #include "data.h"
+#include "BuildingPlaceManager.h"
 
 BWAPI::Unit Tools::GetClosestUnitTo(BWAPI::Position p, const BWAPI::Unitset& units)
 {
@@ -109,7 +110,8 @@ bool Tools::BuildBuilding(BWAPI::UnitType type)
     if (!builder) { return false; }
 
     // Get a location that we want to build the building next to
-    BWAPI::TilePosition desiredPos = BWAPI::Broodwar->self()->getStartLocation();
+    BuildingPlaceManager bpm = BuildingPlaceManager::BuildingPlaceManager();
+    BWAPI::TilePosition desiredPos = bpm.getDesiredPosition(type);
 
     // Ask BWAPI for a building location near the desired position for the type
     int maxBuildRange = 64;

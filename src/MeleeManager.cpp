@@ -10,6 +10,34 @@ MeleeManager::MeleeManager()
 
 }
 
+// attack the enemies in a certain location with radius R.
+void MeleeManager::attackLocation(BWAPI::Unitset my_units,BWAPI::Position center, int radius, bool includeWorkers)
+{
+    BWAPI::Unitset Ennemyunits;
+    getUnits(Ennemyunits, center, radius, false, true); // return ennemies
+    for (auto& unit : my_units)// all enemies near us
+    {
+        BWAPI::Unit u = unit;
+        BWAPI::UnitType t = u->getType();
+        getUnits(Ennemyunits, unit->getPosition(), radius, false, true);
+    }
+    if (!includeWorkers) {
+        BWAPI::Unitset workersRemoved;
+        for (auto& enemyUnit : Ennemyunits)
+        {
+            if (!enemyUnit->getType().isWorker())
+            {
+                workersRemoved.insert(enemyUnit);
+            }
+        }
+        assignTargetsOld(workersRemoved);
+    }
+    else {
+        assignTargetsOld(Ennemyunits);
+    }
+    
+}
+
 
 void MeleeManager::executeMicro(const BWAPI::Unitset& targets)
 {

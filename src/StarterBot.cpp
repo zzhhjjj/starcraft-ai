@@ -40,7 +40,7 @@ StarterBot::StarterBot()
 void StarterBot::onStart()
 {
     // Set our BWAPI options here    
-	BWAPI::Broodwar->setLocalSpeed(10);
+	BWAPI::Broodwar->setLocalSpeed(12);
     BWAPI::Broodwar->setFrameSkip(0);
     
     // Enable the flag that tells BWAPI top let users enter input while bot plays
@@ -96,6 +96,7 @@ void StarterBot::onFrame()
     MeleeManager m;
     BWAPI::Unitset targets = BWAPI::Broodwar->enemy()->getUnits();
     m.assignTargetsOld(targets);
+    
     //end update
 }
 
