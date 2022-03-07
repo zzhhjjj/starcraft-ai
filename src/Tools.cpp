@@ -3,8 +3,6 @@
 #include "data.h"
 #include "BuildingPlaceManager.h"
 
-#include "BuildingPlaceManager.h"
-
 BWAPI::Unit Tools::GetClosestUnitTo(BWAPI::Position p, const BWAPI::Unitset& units)
 {
     BWAPI::Unit closestUnit = nullptr;
@@ -52,7 +50,6 @@ BWAPI::Unit Tools::GetUnitOfType(BWAPI::UnitType type)
                 return unit;
             }
         }
-
         else {
             if (unit->getType() == type && unit->isCompleted())
             {
@@ -60,7 +57,6 @@ BWAPI::Unit Tools::GetUnitOfType(BWAPI::UnitType type)
                 return unit;
             }
         }
-
     }
 
     for (auto& unit : BWAPI::Broodwar->self()->getUnits()) {
@@ -92,8 +88,6 @@ BWAPI::Unitset Tools::GetAllUnitOfType(BWAPI::UnitType type)
     return return_units;
 }
 
-
-
 BWAPI::Unit Tools::GetDepot()
 {
     const BWAPI::UnitType depot = BWAPI::Broodwar->self()->getRace().getResourceDepot();
@@ -101,8 +95,27 @@ BWAPI::Unit Tools::GetDepot()
 }
 
 // Attempt tp construct a building of a given type 
+bool Tools::BuildBuilding(BWAPI::UnitType type)
+{
+    // Get the type of unit that is required to build the desired building
+    BWAPI::UnitType builderType = type.whatBuilds().first;
 
+    // Get a unit that we own that is of the given type so it can build
+    // If we can't find a valid builder unit, then we have to cancel the building
+    BWAPI::Unit builder = Tools::GetUnitOfType(builderType);
+    if (!builder) { return false; }
 
+    // Get a location that we want to build the building next to
+    //BWAPI::TilePosition desiredPos = BWAPI::Broodwar->self()->getStartLocation();
+    BuildingPlaceManager bpm = BuildingPlaceManager::BuildingPlaceManager();
+    BWAPI::TilePosition desiredPos = bpm.getDesiredPosition(type);
+
+    // Ask BWAPI for a building location near the desired position for the type
+    int maxBuildRange = 64;
+    bool buildingOnCreep = type.requiresCreep();
+    BWAPI::TilePosition buildPos = BWAPI::Broodwar->getBuildLocation(type, desiredPos, maxBuildRange, buildingOnCreep);
+    return builder->build(type, buildPos);
+}
 
 void Tools::DrawUnitCommands()
 {

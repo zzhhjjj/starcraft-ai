@@ -10,8 +10,7 @@ class StarterBot
 {
     MapTools m_mapTools;
 	Data m_data;
-
-	BWAPI::Unit m_scout = nullptr;
+	MeleeManager m_meleeManager;
 
 public:
 
@@ -45,6 +44,4 @@ public:
 	/*bool send1WorkerToGas();*/
 	void setScout(BWAPI::Unit unit);
 	void sendScout();
-	void front_strategy();
-	bool BuildBuilding( BWAPI::UnitType type);
 };
