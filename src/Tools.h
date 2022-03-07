@@ -15,7 +15,7 @@ namespace Tools
     BWAPI::Unitset GetAllUnitOfType(BWAPI::UnitType type);
     BWAPI::Unit GetDepot();
 
-    
+
 
     void DrawUnitBoundingBoxes();
     void DrawUnitCommands();
@@ -31,6 +31,6 @@ namespace Tools
     bool train_unit(BWAPI::UnitType type);
     bool upgrade(BWAPI::UpgradeType type);
 
-   
+
     
 }

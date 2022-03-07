@@ -121,7 +121,7 @@ BWAPI::Unit Data::get_a_miner() {
         if (x.second == Minerals) {
             return x.first;
         }
-        
+
     }
     return nullptr;
 }

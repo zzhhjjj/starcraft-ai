@@ -10,7 +10,9 @@ class StarterBot
 {
     MapTools m_mapTools;
 	Data m_data;
+
 	BWAPI::Unit m_scout = nullptr;
+
 public:
 
     StarterBot();

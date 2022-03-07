@@ -1,5 +1,5 @@
+
 #include "BuildingPlaceManager.h"
-#include <stdlib.h>     /* srand, rand */
 
 BuildingPlaceManager::BuildingPlaceManager()
 {
@@ -86,39 +86,24 @@ BWAPI::TilePosition BuildingPlaceManager::getRefineryPosition() const
 
 BWAPI::TilePosition BuildingPlaceManager::getDesiredPosition(BWAPI::UnitType type) const {
     BWAPI::TilePosition position;
-    BWAPI::Position homePosition = BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation());
-    BWAPI::TilePosition homeTilePosition = BWAPI::Broodwar->self()->getStartLocation();
     // if the building type is Pylon, we want to build them without overlap of range 
-    if (type == BWAPI::UnitTypes::Protoss_Pylon)
+    if (type == BWAPI::UnitTypes::Protoss_Pylon) 
     {
-        for (BWAPI::Unit u : BWAPI::Broodwar->self()->getUnits())
+        for(BWAPI::Unit u: BWAPI::Broodwar->self()->getUnits())
         {
-            if (u->getType() == type)
+            if (u->getType() == type) 
             {
                 BWAPI::TilePosition pos = u->getTilePosition();
-                position = BWAPI::TilePosition(pos.x + 8, pos.y).makeValid();
-                return position;
+                position = BWAPI::TilePosition(pos.x + 4, pos.y);
+                if (position.isValid()) 
+                {
+                    return position;
+                }
+                
             }
+            
         }
-        return BWAPI::Broodwar->self()->getStartLocation();
     }
-    //else if (type == BWAPI::UnitTypes::Protoss_Photon_Cannon)
-    //{
-    //    return BWAPI::Broodwar->self()->getStartLocation();
-    //}
-    else
-    {
-        BWAPI::Unit last;
-        for (BWAPI::Unit u : BWAPI::Broodwar->self()->getUnits())
-        {
-            if (u->getType() == BWAPI::UnitTypes::Protoss_Pylon)
-            {
-                int v = rand() % 10;
-                if (v <= 4) { return u->getTilePosition(); }
-                else { last = u; continue; }
-            }
-        }
-        return last->getTilePosition();
-    }
+    return BWAPI::Broodwar->self()->getStartLocation();
 
 }

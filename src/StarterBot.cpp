@@ -2,13 +2,16 @@
 #include "Tools.h"
 #include "MapTools.h"
 #include "map.h"
-
+#include "MeleeManager.h"
 //update
 #include <queue>
 #include<list>
 using namespace std;
 typedef pair<int, BWAPI::UnitType> p; //the moment to build unit
 typedef pair<int, BWAPI::UpgradeType> q; //the moment to upgrade
+
+
+
 
 
 
@@ -40,7 +43,7 @@ StarterBot::StarterBot()
 void StarterBot::onStart()
 {
     // Set our BWAPI options here    
-	BWAPI::Broodwar->setLocalSpeed(10);
+	BWAPI::Broodwar->setLocalSpeed(30);
     BWAPI::Broodwar->setFrameSkip(0);
     
     // Enable the flag that tells BWAPI top let users enter input while bot plays
@@ -91,9 +94,17 @@ void StarterBot::onFrame()
     train();
     upgrade();
     check();
-    if (BWAPI::Broodwar->self()->supplyUsed() > 10 && !m_data.detecte_enemy) { StarterBot::sendScout(); }
-    front_strategy();
+
     
+    
+    if (BWAPI::Broodwar->self()->supplyUsed() > 16&& !m_data.detecte_enemy) { StarterBot::sendScout(); }
+    front_strategy();
+    MeleeManager m;
+    BWAPI::Unitset targets = BWAPI::Broodwar->enemy()->getUnits();
+    m.assignTargetsOld(targets);
+
+    m.attackBase(m_data.enemy_base,  100);
+
     //end update
 }
 
@@ -105,7 +116,9 @@ void StarterBot::sendIdleWorkersToMinerals()
     for (auto& unit : m_data.m_workers)
     {
         // Check the unit type, if it is an idle worker, then we want to send it somewhere
+
         if ( m_data.m_workerJobMap[unit]==m_data.Idle)
+
         {
             // Get the closest mineral to this worker unit
             BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(unit, BWAPI::Broodwar->getMinerals());
@@ -116,6 +129,7 @@ void StarterBot::sendIdleWorkersToMinerals()
             /*m_data.m_workerMineralMap[unit] = closestMineral;*/
         }
     }
+    
 }
 
 // Train more workers so we can gather more income
@@ -142,7 +156,12 @@ void StarterBot::buildAdditionalSupply()
     const int unusedSupply = Tools::GetTotalSupply(true) - BWAPI::Broodwar->self()->supplyUsed();
 
     // If we have a sufficient amount of supply, we don't need to do anything
-    if (unusedSupply >= 4 || m_data.current_mineral()<100  ) { return; }
+
+    // early stage
+    if (  (unusedSupply >= 6 && BWAPI::Broodwar->self()->supplyUsed()<=26 ) || m_data.current_mineral()<100  ) { return; }
+    // after
+    if ( unusedSupply >= 10  || m_data.current_mineral() < 100) { return; }
+
 
     // Otherwise, we are going to build a supply provider
     const BWAPI::UnitType supplyProviderType = BWAPI::Broodwar->self()->getRace().getSupplyProvider();
@@ -152,6 +171,7 @@ void StarterBot::buildAdditionalSupply()
     {
         m_data.current_minus_mineral += supplyProviderType.mineralPrice();
         //BWAPI::Broodwar->printf("Started Building %s", supplyProviderType.getName().c_str());
+
     }
 }
 
@@ -209,7 +229,9 @@ void StarterBot::onUnitCreate(BWAPI::Unit unit)
 // Called whenever a unit finished construction, with a pointer to the unit
 void StarterBot::onUnitComplete(BWAPI::Unit unit)
 {
+
     if (unit->getType().getID() == BWAPI::UnitTypes::Protoss_Assimilator.getID()  && unit->getPlayer()== BWAPI::Broodwar->self()) {
+
         for (int i = 0; i < 3; i++) {
             BWAPI::Unit gaser = m_data.get_a_miner(unit->getPosition());
             if (gaser != nullptr) {
@@ -223,12 +245,14 @@ void StarterBot::onUnitComplete(BWAPI::Unit unit)
         }
 
     }
+
     if (unit->getType() == m_data.worker_type) {
 
         m_data.m_workers.insert(unit);
         m_data.m_workerJobMap[unit] = m_data.Idle;
         /*m_data.m_workerDepotMap[unit] = Tools::GetClosestUnitTo(unit, m_data.m_depots);*/
     }
+
 }
 
 // Called whenever a unit appears, with a pointer to the destroyed unit
@@ -241,6 +265,7 @@ void StarterBot::onUnitShow(BWAPI::Unit unit)
         if (unit->getType().isBuilding() && m_data.detecte_enemy == false) {
             m_data.enemy_race = BWAPI::Broodwar->enemy()->getRace();
             m_data.enemy_building = unit;
+
             m_data.detecte_enemy = true;
             BWAPI::Position enemy_building_pos = unit->getPosition();
             BWAPI::Position scouter_pos = m_scout->getPosition();
@@ -256,11 +281,12 @@ void StarterBot::onUnitShow(BWAPI::Unit unit)
             m_scout->move(BWAPI::Position(1.7 * scouter_pos.x - 0.7 * enemy_building_pos.x, 1.7 * scouter_pos.y - 0.7 * enemy_building_pos.y));
             
 
+
         }  
     }
 
     if (unit->getPlayer()==(BWAPI::Broodwar->self()) && unit->getType().isBuilding()) {
-        //BWAPI::Broodwar->printf("Being built%s ", unit->getType().getName().c_str());
+
         m_data.current_minus_mineral -= unit->getType().mineralPrice();
     }
 
@@ -302,10 +328,12 @@ void StarterBot::onUnitRenegade(BWAPI::Unit unit)
 //}
 
 void StarterBot::initialStrategy() {
+
     
     building_order.push(make_pair(60, BWAPI::UnitTypes::Protoss_Cybernetics_Core));
     building_order.push(make_pair(60, BWAPI::UnitTypes::Protoss_Assimilator));
     building_order.push(make_pair(18, BWAPI::UnitTypes::Protoss_Forge));
+
     train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
     
     train_order.push(make_pair(20, BWAPI::UnitTypes::Protoss_Zealot));
@@ -313,6 +341,20 @@ void StarterBot::initialStrategy() {
     train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
     train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
     train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
+
+    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
+    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
+    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
+    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
+    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
+    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
+    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
+    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
+    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
+    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
+    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
+    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
+
     train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
     train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
     train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
@@ -330,13 +372,17 @@ void StarterBot::build() {
     if (!building_order.empty()) {
         const p b1 = building_order.top();
         if (supply >= b1.first && m_data.current_mineral()>b1.second.mineralPrice()) {//�˿ڹ���
+
             //BWAPI::Broodwar->printf("Want to build %s, mineral:%d...%d", b1.second.getName().c_str(),m_data.current_mineral(),m_data.current_minus_mineral);
             const bool startedBuilding = BuildBuilding(b1.second);// ���ؽ����Ƿ�ʼ����
+
            
             if (startedBuilding)
             {
                 m_data.current_minus_mineral += b1.second.mineralPrice();
+
                 //BWAPI::Broodwar->printf("Started Building %s", BWAPI::UnitTypes::Protoss_Gateway.getName().c_str());
+
                 building_order.pop(); //��������Ӷ������ӵ�
 
             }
@@ -431,6 +477,7 @@ void StarterBot::sendScout()
 }
 
 
+
 void StarterBot::front_strategy() {
     if (m_data.detecte_enemy ) {
 
@@ -498,3 +545,4 @@ bool StarterBot::BuildBuilding( BWAPI::UnitType type)
     BWAPI::TilePosition buildPos = BWAPI::Broodwar->getBuildLocation(type, desiredPos, maxBuildRange, buildingOnCreep);
     return builder->build(type, buildPos);
 }
+
