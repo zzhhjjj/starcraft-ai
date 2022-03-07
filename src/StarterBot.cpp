@@ -280,7 +280,7 @@ void StarterBot::onUnitRenegade(BWAPI::Unit unit)
 //}
 
 void StarterBot::initialStrategy() {
-    building_order.push(make_pair(15, BWAPI::UnitTypes::Protoss_Gateway));
+    building_order.push(make_pair(24, BWAPI::UnitTypes::Protoss_Gateway));
     building_order.push(make_pair(20, BWAPI::UnitTypes::Protoss_Gateway));
     
     building_order.push(make_pair(28, BWAPI::UnitTypes::Protoss_Cybernetics_Core));

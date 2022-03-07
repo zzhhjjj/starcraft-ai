@@ -10,18 +10,23 @@ MeleeManager::MeleeManager()
 
 }
 
-// attack the enemies in a certain location with radius R.
+// attack the enemies in a certain location with radius R. On the mean time decide if we attach workers.
 void MeleeManager::attackLocation(BWAPI::Unitset my_units,BWAPI::Position center, int radius, bool includeWorkers)
 {
+    for (auto& unit : my_units)//move toward the location
+    {
+        unit->move(center);
+    }
+    
     BWAPI::Unitset Ennemyunits;
     getUnits(Ennemyunits, center, radius, false, true); // return ennemies
-    for (auto& unit : my_units)// all enemies near us
+    for (auto& unit : my_units)// all enemies near our units
     {
         BWAPI::Unit u = unit;
         BWAPI::UnitType t = u->getType();
         getUnits(Ennemyunits, unit->getPosition(), radius, false, true);
     }
-    if (!includeWorkers) {
+    if (!includeWorkers) {// not attach workers.
         BWAPI::Unitset workersRemoved;
         for (auto& enemyUnit : Ennemyunits)
         {
@@ -44,14 +49,14 @@ void MeleeManager::executeMicro(const BWAPI::Unitset& targets)
     assignTargetsOld(targets);
 }
 
-void MeleeManager::assignTargetsOld(const BWAPI::Unitset& targets)//传入敌人部队
+void MeleeManager::assignTargetsOld(const BWAPI::Unitset& targets)//ennemy units
 {
     const BWAPI::Unitset meleeUnits = getCombatUnits();
     //getUnits(meleeUnits, BWAPI::Position center, int radius, bool ourUnits, bool oppUnits);
 
     // figure out targets
     BWAPI::Unitset meleeUnitTargets;
-    for (auto& target : targets)//敌人部队
+    for (auto& target : targets)//ennemy units
     {
         // conditions for targeting
         if (!(target->getType().isFlyer()) &&
