@@ -96,7 +96,7 @@ void StarterBot::onFrame()
     
     BWAPI::Unitset targets = BWAPI::Broodwar->enemy()->getUnits();
     m_meleeManager.defendBase();
-    m_meleeManager.attackBase(m_data.enemy_base,  200);
+    m_meleeManager.attackBase(m_data.enemy_base,  120);
 
     //end update
 }
@@ -298,6 +298,7 @@ void StarterBot::initialStrategy() {
     building_order.push(make_pair(20, BWAPI::UnitTypes::Protoss_Gateway));
     building_order.push(make_pair(20, BWAPI::UnitTypes::Protoss_Gateway));
     building_order.push(make_pair(24, BWAPI::UnitTypes::Protoss_Cybernetics_Core));
+    building_order.push(make_pair(80, BWAPI::UnitTypes::Protoss_Gateway));
     building_order.push(make_pair(2, BWAPI::UnitTypes::Protoss_Assimilator));
 
     
