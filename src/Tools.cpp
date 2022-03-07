@@ -45,25 +45,25 @@ BWAPI::Unit Tools::GetUnitOfType(BWAPI::UnitType type)
     {
         // if the unit is of the correct type, and it actually has been constructed, return it
         if (type.isBuilding()) {  // we want to split the traing task between same kind of building 
-            if (unit->getType() == type && !unit->isTraining()) // prioritize not used building 
+            if (unit->getType() == type &&  !unit->isTraining()) // prioritize not used building 
             {
                 return unit;
             }
         }
-
-        else {
+        
+        else{
             if (unit->getType() == type && unit->isCompleted())
             {
                 if (unit->getType().isWorker() && unit->isMoving()) { continue; }
                 return unit;
             }
         }
-
+        
     }
 
     for (auto& unit : BWAPI::Broodwar->self()->getUnits()) {
         if (type.isBuilding()) {  // we want to split the traing task between same kind of building 
-            if (unit->getType() == type)// if all the building is occupied
+            if (unit->getType() == type )// if all the building is occupied
             {
                 return unit;
             }
@@ -104,11 +104,12 @@ bool Tools::BuildBuilding(BWAPI::UnitType type)
 
     // Get a unit that we own that is of the given type so it can build
     // If we can't find a valid builder unit, then we have to cancel the building
+
+        
     BWAPI::Unit builder = Tools::GetUnitOfType(builderType);
     if (!builder) { return false; }
 
     // Get a location that we want to build the building next to
-    //BWAPI::TilePosition desiredPos = BWAPI::Broodwar->self()->getStartLocation();
     BuildingPlaceManager bpm = BuildingPlaceManager::BuildingPlaceManager();
     BWAPI::TilePosition desiredPos = bpm.getDesiredPosition(type);
 

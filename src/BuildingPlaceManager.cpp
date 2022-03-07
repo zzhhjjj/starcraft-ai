@@ -1,5 +1,4 @@
 #include "BuildingPlaceManager.h"
-#include <stdlib.h>     /* srand, rand */
 
 BuildingPlaceManager::BuildingPlaceManager()
 {
@@ -86,52 +85,23 @@ BWAPI::TilePosition BuildingPlaceManager::getRefineryPosition() const
 
 BWAPI::TilePosition BuildingPlaceManager::getDesiredPosition(BWAPI::UnitType type) const {
     BWAPI::TilePosition position;
-    BWAPI::Position homePosition = BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation());
-    BWAPI::TilePosition homeTilePosition = BWAPI::Broodwar->self()->getStartLocation();
     // if the building type is Pylon, we want to build them without overlap of range 
     if (type == BWAPI::UnitTypes::Protoss_Pylon) 
     {
-        BWAPI::TilePosition pos = BWAPI::TilePosition(1000, 1000);
         for(BWAPI::Unit u: BWAPI::Broodwar->self()->getUnits())
-        {             
+        {
             if (u->getType() == type) 
             {
-                pos = u->getTilePosition();              
-            }                       
-        }
-        if (pos.x != 1000 || pos.y != 1000)
-        {
-            position = BWAPI::TilePosition(pos.x + 4, pos.y).makeValid();
-            return position;
-        }
-        else { return BWAPI::Broodwar->self()->getStartLocation(); }
-    }
-    //else if (type == BWAPI::UnitTypes::Protoss_Photon_Cannon)
-    //{
-    //    return BWAPI::Broodwar->self()->getStartLocation();
-    //}
-    else
-    {
-        BWAPI::Unit last;
-        bool PylonExist = false;
-        for (BWAPI::Unit u : BWAPI::Broodwar->self()->getUnits())
-        {           
-            if (u->getType() == BWAPI::UnitTypes::Protoss_Pylon)
-            {
-                PylonExist = true;
-                int v = rand() % 10;
-                if (v <= 4) { return u->getTilePosition().makeValid();}
-                else { last = u; continue; }
-            } 
-            if (PylonExist)
-            {
-                return last->getTilePosition().makeValid();
+                BWAPI::TilePosition pos = u->getTilePosition();
+                position = BWAPI::TilePosition(pos.x + 4, pos.y);
+                if (position.isValid()) 
+                {
+                    return position;
+                }
+                
             }
-            else 
-            {
-                return BWAPI::Broodwar->self()->getStartLocation();
-            }
-        }   
+            
+        }
     }
-
+    return BWAPI::Broodwar->self()->getStartLocation();
 }
