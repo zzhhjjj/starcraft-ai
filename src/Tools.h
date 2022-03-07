@@ -1,8 +1,6 @@
 #pragma once
 
 #include <BWAPI.h>
-#include "BuildingPlaceManager.h"
-
 
 namespace Tools
 {
@@ -17,7 +15,7 @@ namespace Tools
     BWAPI::Unitset GetAllUnitOfType(BWAPI::UnitType type);
     BWAPI::Unit GetDepot();
 
-    bool BuildBuilding(BWAPI::UnitType type);
+    bool BuildBuilding( BWAPI::UnitType type);
 
     void DrawUnitBoundingBoxes();
     void DrawUnitCommands();

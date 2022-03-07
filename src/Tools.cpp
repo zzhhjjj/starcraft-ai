@@ -1,5 +1,7 @@
 #include "Tools.h"
 #include "map.h"
+#include "data.h"
+#include "BuildingPlaceManager.h"
 
 BWAPI::Unit Tools::GetClosestUnitTo(BWAPI::Position p, const BWAPI::Unitset& units)
 {
@@ -42,10 +44,29 @@ BWAPI::Unit Tools::GetUnitOfType(BWAPI::UnitType type)
     for (auto& unit : BWAPI::Broodwar->self()->getUnits())
     {
         // if the unit is of the correct type, and it actually has been constructed, return it
-        if (unit->getType() == type && unit->isCompleted())
-        {
-            if (unit->getType().isWorker() && unit->isMoving()) { continue; }
-            return unit;
+        if (type.isBuilding()) {  // we want to split the traing task between same kind of building 
+            if (unit->getType() == type && !unit->isTraining()) // prioritize not used building 
+            {
+                return unit;
+            }
+        }
+
+        else {
+            if (unit->getType() == type && unit->isCompleted())
+            {
+                if (unit->getType().isWorker() && unit->isMoving()) { continue; }
+                return unit;
+            }
+        }
+
+    }
+
+    for (auto& unit : BWAPI::Broodwar->self()->getUnits()) {
+        if (type.isBuilding()) {  // we want to split the traing task between same kind of building 
+            if (unit->getType() == type)// if all the building is occupied
+            {
+                return unit;
+            }
         }
     }
     // If we didn't find a valid unit to return, make sure we return nullptr
@@ -74,7 +95,7 @@ BWAPI::Unit Tools::GetDepot()
     const BWAPI::UnitType depot = BWAPI::Broodwar->self()->getRace().getResourceDepot();
     return GetUnitOfType(depot);
 }
-//update
+
 // Attempt tp construct a building of a given type 
 bool Tools::BuildBuilding(BWAPI::UnitType type)
 {
@@ -88,7 +109,6 @@ bool Tools::BuildBuilding(BWAPI::UnitType type)
 
     // Get a location that we want to build the building next to
     //BWAPI::TilePosition desiredPos = BWAPI::Broodwar->self()->getStartLocation();
-    //update
     BuildingPlaceManager bpm = BuildingPlaceManager::BuildingPlaceManager();
     BWAPI::TilePosition desiredPos = bpm.getDesiredPosition(type);
 

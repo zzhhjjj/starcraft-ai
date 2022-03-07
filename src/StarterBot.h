@@ -1,12 +1,15 @@
 #pragma once
 
 #include "MapTools.h"
-
+#include "data.h"
 #include <BWAPI.h>
+
+
 
 class StarterBot
 {
     MapTools m_mapTools;
+	Data m_data;
 
 public:
 
@@ -37,7 +40,7 @@ public:
 	void train();
 	void check();
 	void upgrade();
-	bool send1WorkerToGas();
+	/*bool send1WorkerToGas();*/
 	void setScout(BWAPI::Unit unit);
 	void sendScout();
 };
