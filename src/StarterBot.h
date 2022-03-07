@@ -10,6 +10,7 @@ class StarterBot
 {
     MapTools m_mapTools;
 	Data m_data;
+	
 
 public:
 
