@@ -97,7 +97,7 @@ void StarterBot::onFrame()
     upgrade();
     check();
 
-   if (BWAPI::Broodwar->self()->supplyUsed() > 16&& !m_data.detecte_enemy) { StarterBot::sendScout(); }
+   if (BWAPI::Broodwar->self()->supplyUsed() > 8&& !m_data.detecte_enemy) { StarterBot::sendScout(); }
     front_strategy();
     
     BWAPI::Unitset targets = BWAPI::Broodwar->enemy()->getUnits();
@@ -280,7 +280,7 @@ void StarterBot::onUnitShow(BWAPI::Unit unit)
             BWAPI::Broodwar->printf("find enenmy base!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ");
             BWAPI::Broodwar->printf("%s ",m_scout->getLastCommand().getType().c_str());
 
-            m_data.front_pylon_pos = BWAPI::TilePosition(BWAPI::Position(1.7 * scouter_pos.x - 0.7 * enemy_building_pos.x, 1.7 * scouter_pos.y - 0.7 * enemy_building_pos.y).makeValid());
+            m_data.front_pylon_pos = BWAPI::TilePosition(BWAPI::Position(1.5 * scouter_pos.x - 0.5 * enemy_building_pos.x, 1.5 * scouter_pos.y - 0.5 * enemy_building_pos.y).makeValid());
             
           
             m_scout->move(BWAPI::Position(1.7 * scouter_pos.x - 0.7 * enemy_building_pos.x, 1.7 * scouter_pos.y - 0.7 * enemy_building_pos.y));
@@ -500,7 +500,7 @@ void StarterBot::front_strategy() {
      
         if (!m_data.front_pylon && m_data.current_mineral()> BWAPI::UnitTypes::Protoss_Pylon.mineralPrice()) {
             BWAPI::Broodwar->printf("want to build front pylon  %d",m_data.current_mineral());
-            BWAPI::TilePosition pylonpos = BWAPI::Broodwar->getBuildLocation(BWAPI::UnitTypes::Protoss_Pylon, BWAPI::TilePosition(m_data.front_pylon_pos), 100, false);
+            BWAPI::TilePosition pylonpos = BWAPI::Broodwar->getBuildLocation(BWAPI::UnitTypes::Protoss_Pylon, BWAPI::TilePosition(m_data.front_pylon_pos), 150, false);
             bool  succeed=m_scout->build(BWAPI::UnitTypes::Protoss_Pylon, pylonpos);
             if (succeed) {
                 m_data.front_pylon_pos = pylonpos;
@@ -519,7 +519,8 @@ void StarterBot::front_strategy() {
 
         if (m_data.front_canon<2 && m_data.current_mineral() > BWAPI::UnitTypes::Protoss_Photon_Cannon.mineralPrice()) {
             BWAPI::Broodwar->printf("want to build front canon  %d", m_data.current_mineral());
-            BWAPI::TilePosition cannonpos = BWAPI::Broodwar->getBuildLocation(BWAPI::UnitTypes::Protoss_Photon_Cannon, BWAPI::TilePosition(m_data.front_pylon_pos), 64, false);
+            BWAPI::Position wanted_pos = BWAPI::Position(0.9 * m_data.front_pylon_pos.x + 0.1 * m_data.enemy_base.x, 0.9 * m_data.front_pylon_pos.y + 0.1 * m_data.enemy_base.y);
+            BWAPI::TilePosition cannonpos = BWAPI::Broodwar->getBuildLocation(BWAPI::UnitTypes::Protoss_Photon_Cannon, BWAPI::TilePosition(wanted_pos), 48, false);
             bool  succeed = m_scout->build(BWAPI::UnitTypes::Protoss_Photon_Cannon, cannonpos);
             if (succeed) {
                 m_data.current_minus_mineral += BWAPI::UnitTypes::Protoss_Photon_Cannon.mineralPrice();
@@ -528,12 +529,35 @@ void StarterBot::front_strategy() {
         }
         if (m_data.front_gateway<2&& m_data.front_canon>1 && m_data.current_mineral()> BWAPI::UnitTypes::Protoss_Gateway.mineralPrice()) {
             BWAPI::Broodwar->printf("want to build front Gateway  %d", m_data.current_mineral());
+
+            
             
             BWAPI::TilePosition gatewaypos = BWAPI::Broodwar->getBuildLocation(BWAPI::UnitTypes::Protoss_Gateway, BWAPI::TilePosition(m_data.front_pylon_pos), 64, false);
             bool  succeed = m_scout->build(BWAPI::UnitTypes::Protoss_Gateway, gatewaypos.makeValid());
             if (succeed) {
                 m_data.current_minus_mineral += BWAPI::UnitTypes::Protoss_Gateway.mineralPrice();
                 m_data.front_gateway++;
+            }
+        }
+        if (m_data.front_gateway>0 && m_data.second_pylon ==false&& m_data.current_mineral() > BWAPI::UnitTypes::Protoss_Pylon.mineralPrice()) {
+            BWAPI::Broodwar->printf("want to build front pylon  %d", m_data.current_mineral());
+            BWAPI::Position wanted_pos = BWAPI::Position(0.5 * m_data.front_pylon_pos.x + 0.5 * m_data.enemy_base.x, 0.5 * m_data.front_pylon_pos.y + 0.5 * m_data.enemy_base.y);
+            BWAPI::TilePosition pylonpos = BWAPI::Broodwar->getBuildLocation(BWAPI::UnitTypes::Protoss_Pylon, BWAPI::TilePosition(wanted_pos), 64, false);
+            bool  succeed = m_scout->build(BWAPI::UnitTypes::Protoss_Pylon, pylonpos);
+            if (succeed) {
+               
+                m_data.current_minus_mineral += BWAPI::UnitTypes::Protoss_Pylon.mineralPrice();
+                m_data.second_pylon = true;
+            }
+        }
+        if (m_data.second_pylon && m_data.front_canon<5 && m_data.current_mineral() > BWAPI::UnitTypes::Protoss_Photon_Cannon.mineralPrice()) {
+            BWAPI::Broodwar->printf("want to build front canon  %d", m_data.current_mineral());
+            BWAPI::Position wanted_pos = BWAPI::Position(0.3 * m_data.front_pylon_pos.x + 0.7 * m_data.enemy_base.x, 0.3 * m_data.front_pylon_pos.y + 0.7 * m_data.enemy_base.y);
+            BWAPI::TilePosition cannonpos = BWAPI::Broodwar->getBuildLocation(BWAPI::UnitTypes::Protoss_Photon_Cannon, BWAPI::TilePosition(wanted_pos), 32, false);
+            bool  succeed = m_scout->build(BWAPI::UnitTypes::Protoss_Photon_Cannon, cannonpos);
+            if (succeed) {
+                m_data.current_minus_mineral += BWAPI::UnitTypes::Protoss_Photon_Cannon.mineralPrice();
+                m_data.front_canon++;
             }
         }
     }

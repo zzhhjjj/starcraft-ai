@@ -20,6 +20,7 @@ public:
 
 
     bool front_pylon = false;
+    bool second_pylon = false;
     int front_gateway=0;
     bool base_forge = false;
     int front_canon=0;

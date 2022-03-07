@@ -2,7 +2,7 @@
 #include <BWAPI.h>
 
 
-//×Ô¼ºµÄ
+
 class MeleeManager
 {
 
