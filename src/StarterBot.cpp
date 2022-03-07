@@ -202,6 +202,9 @@ void StarterBot::onUnitDestroy(BWAPI::Unit unit)
     if (unit->getType() == BWAPI::UnitTypes::Protoss_Photon_Cannon) {
         m_data.front_canon--;
     }
+    if (unit->getType() == m_data.worker_type) {
+        m_data.m_workerJobMap.erase(unit);
+    }
 }
 
 // Called whenever a unit is morphed, with a pointer to the unit
@@ -510,7 +513,7 @@ void StarterBot::front_strategy() {
      
         if (!m_data.front_pylon && m_data.current_mineral()> BWAPI::UnitTypes::Protoss_Pylon.mineralPrice()) {
             BWAPI::Broodwar->printf("want to build front pylon  %d",m_data.current_mineral());
-            BWAPI::TilePosition pylonpos = BWAPI::Broodwar->getBuildLocation(BWAPI::UnitTypes::Protoss_Pylon, BWAPI::TilePosition(m_data.front_pylon_pos), 64, false);
+            BWAPI::TilePosition pylonpos = BWAPI::Broodwar->getBuildLocation(BWAPI::UnitTypes::Protoss_Pylon, BWAPI::TilePosition(m_data.front_pylon_pos), 32, false);
             bool  succeed=m_scout->build(BWAPI::UnitTypes::Protoss_Pylon, pylonpos);
             if (succeed) {
                 m_data.front_pylon_pos = pylonpos;
