@@ -9,7 +9,10 @@
 using namespace std;
 typedef pair<int, BWAPI::UnitType> p; //the moment to build unit
 typedef pair<int, BWAPI::UpgradeType> q; //the moment to upgrade
-BWAPI::Unit m_scout = nullptr;
+
+
+
+
 
 
 
@@ -40,7 +43,9 @@ StarterBot::StarterBot()
 void StarterBot::onStart()
 {
     // Set our BWAPI options here    
+
 	BWAPI::Broodwar->setLocalSpeed(15);
+
     BWAPI::Broodwar->setFrameSkip(0);
     
     // Enable the flag that tells BWAPI top let users enter input while bot plays
@@ -91,12 +96,14 @@ void StarterBot::onFrame()
     train();
     upgrade();
     check();
-    if (BWAPI::Broodwar->self()->supplyUsed() > 16) { StarterBot::sendScout(); }
 
+   if (BWAPI::Broodwar->self()->supplyUsed() > 16&& !m_data.detecte_enemy) { StarterBot::sendScout(); }
+    front_strategy();
     
     BWAPI::Unitset targets = BWAPI::Broodwar->enemy()->getUnits();
     m_meleeManager.defendBase();
     m_meleeManager.attackBase(m_data.enemy_base,  120);
+
 
     //end update
 }
@@ -109,7 +116,9 @@ void StarterBot::sendIdleWorkersToMinerals()
     for (auto& unit : m_data.m_workers)
     {
         // Check the unit type, if it is an idle worker, then we want to send it somewhere
-        if ( unit->isIdle())
+
+        if ( m_data.m_workerJobMap[unit]==m_data.Idle)
+
         {
             // Get the closest mineral to this worker unit
             BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(unit, BWAPI::Broodwar->getMinerals());
@@ -140,26 +149,31 @@ void StarterBot::trainAdditionalWorkers()
     }
 }
 
-// Build more supply if we are going to run out soon
+// Build more supply if we are going to runbu out soon
 void StarterBot::buildAdditionalSupply()
 {
     // Get the amount of supply supply we currently have unused
     const int unusedSupply = Tools::GetTotalSupply(true) - BWAPI::Broodwar->self()->supplyUsed();
 
     // If we have a sufficient amount of supply, we don't need to do anything
+
     // early stage
     if (  (unusedSupply >= 6 && BWAPI::Broodwar->self()->supplyUsed()<=26 ) || m_data.current_mineral()<100  ) { return; }
     // after
     if ( unusedSupply >= 10  || m_data.current_mineral() < 100) { return; }
 
+
     // Otherwise, we are going to build a supply provider
     const BWAPI::UnitType supplyProviderType = BWAPI::Broodwar->self()->getRace().getSupplyProvider();
     
-    const bool startedBuilding = Tools::BuildBuilding(supplyProviderType);
+
+    const bool startedBuilding = BuildBuilding(supplyProviderType);
     if (startedBuilding)
     {
         m_data.current_minus_mineral += supplyProviderType.mineralPrice();
-        BWAPI::Broodwar->printf("Started Building %s", supplyProviderType.getName().c_str());
+        //BWAPI::Broodwar->printf("Started Building %s", supplyProviderType.getName().c_str());
+
+
     }
 }
 
@@ -174,6 +188,9 @@ void StarterBot::drawDebugInformation()
 // Called whenever a unit is destroyed, with a pointer to the unit
 void StarterBot::onUnitDestroy(BWAPI::Unit unit)
 {
+    if (unit == m_scout) {
+        m_scout = m_data.get_a_miner();
+    }
 	
 }
 
@@ -214,7 +231,9 @@ void StarterBot::onUnitCreate(BWAPI::Unit unit)
 // Called whenever a unit finished construction, with a pointer to the unit
 void StarterBot::onUnitComplete(BWAPI::Unit unit)
 {
-    if (unit->getType().getID() == BWAPI::UnitTypes::Protoss_Assimilator.getID()) {
+
+    if (unit->getType().getID() == BWAPI::UnitTypes::Protoss_Assimilator.getID()  && unit->getPlayer()== BWAPI::Broodwar->self()) {
+
         for (int i = 0; i < 3; i++) {
             BWAPI::Unit gaser = m_data.get_a_miner(unit->getPosition());
             if (gaser != nullptr) {
@@ -228,6 +247,14 @@ void StarterBot::onUnitComplete(BWAPI::Unit unit)
         }
 
     }
+
+    if (unit->getType() == m_data.worker_type) {
+
+        m_data.m_workers.insert(unit);
+        m_data.m_workerJobMap[unit] = m_data.Idle;
+        /*m_data.m_workerDepotMap[unit] = Tools::GetClosestUnitTo(unit, m_data.m_depots);*/
+    }
+
 }
 
 // Called whenever a unit appears, with a pointer to the destroyed unit
@@ -240,20 +267,32 @@ void StarterBot::onUnitShow(BWAPI::Unit unit)
         if (unit->getType().isBuilding() && m_data.detecte_enemy == false) {
             m_data.enemy_race = BWAPI::Broodwar->enemy()->getRace();
             m_data.enemy_building = unit;
+            
 
+
+            m_data.detecte_enemy = true;
             BWAPI::Position enemy_building_pos = unit->getPosition();
+            m_data.enemy_base =  unit->getPosition();
             BWAPI::Position scouter_pos = m_scout->getPosition();
             
-            m_data.front_pylon_pos = BWAPI::Position(2* scouter_pos.x- enemy_building_pos.x, 2 * scouter_pos.y - enemy_building_pos.y);
+            
 
             BWAPI::Broodwar->printf("find enenmy base!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ");
-            m_data.enemy_base = enemy_building_pos;
-            BWAPI::Broodwar->printf("Enemy base at %d, %d", m_data.enemy_base.x, m_data.enemy_base.y);
+            BWAPI::Broodwar->printf("%s ",m_scout->getLastCommand().getType().c_str());
+
+            m_data.front_pylon_pos = BWAPI::TilePosition(BWAPI::Position(1.7 * scouter_pos.x - 0.7 * enemy_building_pos.x, 1.7 * scouter_pos.y - 0.7 * enemy_building_pos.y).makeValid());
+            
+          
+            m_scout->move(BWAPI::Position(1.7 * scouter_pos.x - 0.7 * enemy_building_pos.x, 1.7 * scouter_pos.y - 0.7 * enemy_building_pos.y));
+            
+
+
+
         }  
     }
 
     if (unit->getPlayer()==(BWAPI::Broodwar->self()) && unit->getType().isBuilding()) {
-        BWAPI::Broodwar->printf("Being built%s ", unit->getType().getName().c_str());
+
         m_data.current_minus_mineral -= unit->getType().mineralPrice();
     }
 
@@ -295,58 +334,51 @@ void StarterBot::onUnitRenegade(BWAPI::Unit unit)
 //}
 
 void StarterBot::initialStrategy() {
-    building_order.push(make_pair(20, BWAPI::UnitTypes::Protoss_Gateway));
-    building_order.push(make_pair(20, BWAPI::UnitTypes::Protoss_Gateway));
-    building_order.push(make_pair(24, BWAPI::UnitTypes::Protoss_Cybernetics_Core));
-    building_order.push(make_pair(80, BWAPI::UnitTypes::Protoss_Gateway));
-    building_order.push(make_pair(2, BWAPI::UnitTypes::Protoss_Assimilator));
+
 
     
+    building_order.push(make_pair(60, BWAPI::UnitTypes::Protoss_Cybernetics_Core));
+    building_order.push(make_pair(60, BWAPI::UnitTypes::Protoss_Assimilator));
+    building_order.push(make_pair(18, BWAPI::UnitTypes::Protoss_Forge));
+
+    //building_order.push(make_pair(20, BWAPI::UnitTypes::Protoss_Gateway));
+   // building_order.push(make_pair(20, BWAPI::UnitTypes::Protoss_Gateway));
+  //  building_order.push(make_pair(24, BWAPI::UnitTypes::Protoss_Cybernetics_Core));
+    //building_order.push(make_pair(80, BWAPI::UnitTypes::Protoss_Gateway));
+   
+
+
     
-    train_order.push(make_pair(20, BWAPI::UnitTypes::Protoss_Zealot));
+
     train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
-    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
-    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
-    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
-    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
-    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
-    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
-    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
-    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
-    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
-    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
-    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
-    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
-    train_order.push(make_pair(32, BWAPI::UnitTypes::Protoss_Zealot));
+    
     train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
-    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
-    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
-    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
-    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
-    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
-    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
-    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
-    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
-    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
-    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
-    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
-    train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
+   
     upgrade_order.push(make_pair(40, BWAPI::UpgradeTypes::Singularity_Charge));
 }
-//����
+
 void StarterBot::build() {
     const int supply = BWAPI::Broodwar->self()->supplyUsed();
     if (!building_order.empty()) {
         const p b1 = building_order.top();
+
         if (supply >= b1.first && m_data.current_mineral()>b1.second.mineralPrice()) {
-            BWAPI::Broodwar->printf("Want to build %s, mineral:%d...%d", b1.second.getName().c_str(),m_data.current_mineral(),m_data.current_minus_mineral);
-            const bool startedBuilding = Tools::BuildBuilding(b1.second);
+
+            //BWAPI::Broodwar->printf("Want to build %s, mineral:%d...%d", b1.second.getName().c_str(),m_data.current_mineral(),m_data.current_minus_mineral);
+            const bool startedBuilding = BuildBuilding(b1.second);
+
+
            
             if (startedBuilding)
             {
                 m_data.current_minus_mineral += b1.second.mineralPrice();
-                BWAPI::Broodwar->printf("Started Building %s", BWAPI::UnitTypes::Protoss_Gateway.getName().c_str());
+
+
+                //BWAPI::Broodwar->printf("Started Building %s", BWAPI::UnitTypes::Protoss_Gateway.getName().c_str());
+
                 building_order.pop(); 
+
+
             }
         }
     }
@@ -357,15 +389,15 @@ void StarterBot::train() {
     const int supply = BWAPI::Broodwar->self()->supplyUsed();
     /*if (!train_order.empty()) {
         const p b1 = train_order.top();
+
         if (supply >= b1.first && m_data.current_mineral()>b1.second.mineralPrice()) {
+
             const bool startedtrain = Tools::train_unit(b1.second);
             if (startedtrain)
             {
-                BWAPI::Broodwar->printf("Started train %s", b1.second.getName().c_str());
+                //BWAPI::Broodwar->printf("Started train %s", b1.second.getName().c_str());
                 train_order.pop(); 
-            }
-            else {
-                BWAPI::Broodwar->printf("Training fail ");
+
             }
 
         }
@@ -399,12 +431,12 @@ void StarterBot::upgrade() {
     const int supply = BWAPI::Broodwar->self()->supplyUsed();
     if (!upgrade_order.empty()) {
         const q b1 = upgrade_order.top();
-        if (supply >= b1.first && m_data.current_mineral() > b1.second.mineralPrice()) {//�˿ڹ���
-            const bool startedupgrade = Tools::upgrade(b1.second);// ���ؽ����Ƿ�ʼ����
+        if (supply >= b1.first && m_data.current_mineral() > b1.second.mineralPrice()) {
+            const bool startedupgrade = Tools::upgrade(b1.second);
             if (startedupgrade)
             {
-                BWAPI::Broodwar->printf("Started upgrade %s", b1.second.getName().c_str());
-                upgrade_order.pop(); //��������Ӷ������ӵ�
+                //BWAPI::Broodwar->printf("Started upgrade %s", b1.second.getName().c_str());
+                upgrade_order.pop(); 
             }
 
         }
@@ -445,8 +477,16 @@ void StarterBot::sendScout()
 
     for (auto location : BWAPI::Broodwar->getStartLocations())
     {
-        if (!BWAPI::Broodwar->isExplored(location))
+        if (m_data.detecte_enemy == true) {
+            BWAPI::Broodwar->printf("Enemy building is %s, position: %d, %d", m_data.enemy_building->getType().getName().c_str(),m_data.enemy_building->getPosition().x, m_data.enemy_building->getPosition().y);
+            return;
+        }
+        if (!BWAPI::Broodwar->isExplored(location) )
         {
+            if (m_data.detecte_enemy == true) {
+                BWAPI::Broodwar->printf("Enemy building is %s, position: %d, %d", m_data.enemy_building->getType().getName().c_str(), m_data.enemy_building->getPosition().x, m_data.enemy_building->getPosition().y);
+                return;
+            }
             m_scout->move(BWAPI::Position(location));
             return;
         }
@@ -455,4 +495,69 @@ void StarterBot::sendScout()
 
 
 
+void StarterBot::front_strategy() {
+    if (m_data.detecte_enemy ) {
+     
+        if (!m_data.front_pylon && m_data.current_mineral()> BWAPI::UnitTypes::Protoss_Pylon.mineralPrice()) {
+            BWAPI::Broodwar->printf("want to build front pylon  %d",m_data.current_mineral());
+            BWAPI::TilePosition pylonpos = BWAPI::Broodwar->getBuildLocation(BWAPI::UnitTypes::Protoss_Pylon, BWAPI::TilePosition(m_data.front_pylon_pos), 100, false);
+            bool  succeed=m_scout->build(BWAPI::UnitTypes::Protoss_Pylon, pylonpos);
+            if (succeed) {
+                m_data.front_pylon_pos = pylonpos;
+                m_data.current_minus_mineral += BWAPI::UnitTypes::Protoss_Pylon.mineralPrice();
+                m_data.front_pylon = true;
+            }
+        }
+        /*if (!m_data.base_forge && m_data.current_mineral() > BWAPI::UnitTypes::Protoss_Forge.mineralPrice()) {
+            BWAPI::Broodwar->printf("want to build front forge  %d", m_data.current_mineral());
+            bool  succeed = BuildBuilding(BWAPI::UnitTypes::Protoss_Forge);
+            if (succeed) {
+                m_data.current_minus_mineral += BWAPI::UnitTypes::Protoss_Forge.mineralPrice();
+                m_data.base_forge = true;
+            }
+        }*/
+
+        if (m_data.front_canon<2 && m_data.current_mineral() > BWAPI::UnitTypes::Protoss_Photon_Cannon.mineralPrice()) {
+            BWAPI::Broodwar->printf("want to build front canon  %d", m_data.current_mineral());
+            BWAPI::TilePosition cannonpos = BWAPI::Broodwar->getBuildLocation(BWAPI::UnitTypes::Protoss_Photon_Cannon, BWAPI::TilePosition(m_data.front_pylon_pos), 64, false);
+            bool  succeed = m_scout->build(BWAPI::UnitTypes::Protoss_Photon_Cannon, cannonpos);
+            if (succeed) {
+                m_data.current_minus_mineral += BWAPI::UnitTypes::Protoss_Photon_Cannon.mineralPrice();
+                m_data.front_canon++;
+            }
+        }
+        if (m_data.front_gateway<2&& m_data.front_canon>1 && m_data.current_mineral()> BWAPI::UnitTypes::Protoss_Gateway.mineralPrice()) {
+            BWAPI::Broodwar->printf("want to build front Gateway  %d", m_data.current_mineral());
+            
+            BWAPI::TilePosition gatewaypos = BWAPI::Broodwar->getBuildLocation(BWAPI::UnitTypes::Protoss_Gateway, BWAPI::TilePosition(m_data.front_pylon_pos), 64, false);
+            bool  succeed = m_scout->build(BWAPI::UnitTypes::Protoss_Gateway, gatewaypos.makeValid());
+            if (succeed) {
+                m_data.current_minus_mineral += BWAPI::UnitTypes::Protoss_Gateway.mineralPrice();
+                m_data.front_gateway++;
+            }
+        }
+    }
+}
+
+
+
+bool StarterBot::BuildBuilding( BWAPI::UnitType type)
+{
+    // Get the type of unit that is required to build the desired building
+    BWAPI::UnitType builderType = type.whatBuilds().first;
+
+    // Get a unit that we own that is of the given type so it can build
+    // If we can't find a valid builder unit, then we have to cancel the building
+    BWAPI::Unit builder = m_data.get_a_miner();
+    if (!builder) { return false; }
+
+    // Get a location that we want to build the building next to
+    BWAPI::TilePosition desiredPos = BWAPI::Broodwar->self()->getStartLocation();
+
+    // Ask BWAPI for a building location near the desired position for the type
+    int maxBuildRange = 64;
+    bool buildingOnCreep = type.requiresCreep();
+    BWAPI::TilePosition buildPos = BWAPI::Broodwar->getBuildLocation(type, desiredPos, maxBuildRange, buildingOnCreep);
+    return builder->build(type, buildPos);
+}
 

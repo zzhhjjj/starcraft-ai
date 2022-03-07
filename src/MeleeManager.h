@@ -2,7 +2,7 @@
 #include <BWAPI.h>
 
 
-//×Ô¼ºµÄ
+//Ã—Ã”Â¼ÂºÂµÃ„
 class MeleeManager
 {
 
@@ -23,5 +23,7 @@ class MeleeManager
         void SmartAttackUnit(BWAPI::Unit attacker, BWAPI::Unit target);
         void attackLocation(BWAPI::Unitset my_units, BWAPI::Position center, int radius, bool includeWorkers);
         void MeleeManager::attackBase(BWAPI::Position enemy_base, int units_supply);
+
         void MeleeManager::defendBase();
+
 };

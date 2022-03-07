@@ -1,3 +1,4 @@
+
 #pragma once
 #include <BWAPI.h>
 #include "data.h"
@@ -36,3 +37,4 @@ public:
 	void removeCombatUnit(AttackGroup gp);
 	void update();
 };
+
