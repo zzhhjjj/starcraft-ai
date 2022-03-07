@@ -13,7 +13,7 @@ public:
 
     BWAPI::Race enemy_race ;
     BWAPI::Unit enemy_building ;
-
+    
 
     BWAPI::TilePosition front_pylon_pos;
     bool detecte_enemy = false;
