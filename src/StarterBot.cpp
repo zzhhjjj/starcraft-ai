@@ -90,53 +90,13 @@ void StarterBot::onFrame()
     train();    
     upgrade();
     check();
-
- 
-    if (BWAPI::Broodwar->self()->supplyUsed() > 10 && !m_data.detecte_enemy) { StarterBot::sendScout(); }
     front_strategy();
 
-    BWAPI::Unitset targets = BWAPI::Broodwar->enemy()->getUnits();
-
-    //m_meleeManager.Strategy(BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation()), m_data.enemy_base(), 80);
+ 
     
-    m_meleeManager.defendBase(BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation()));
-
-    if (m_data.front_pylon) { m_meleeManager.setRallyPoint(BWAPI::Position(m_data.front_pylon_pos)); }
-    //else { m_meleeManager.setRallyPoint(BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation())); }
-
-    AttackGroup attackGp = m_meleeManager.getCombatGroup(m_data.CombatRallyPoint, 128 * 32, m_data.groupSize);
-    //BWAPI::BroodwarPtr->printf("Attack group formed: %d", attackGp.size());
-    m_meleeManager.combatCenter.update();
-
-    if (attackGp.size() == m_data.groupSize) { 
-        m_meleeManager.combatCenter.addCombatUnit(attackGp);
-        m_meleeManager.attackBase(attackGp, m_data.enemy_base()); }
-    for (AttackGroup gp : m_meleeManager.combatCenter.getGroups()) {
-        if(gp.size() > 0){ m_meleeManager.attackBase(gp, m_data.enemy_base()); }      
-    }
     //end update
 }
 
-// Send our idle workers to mine minerals so they don't just stand there
-//void StarterBot::sendIdleWorkersToMinerals()
-//{
-//    // Let's send all of our starting workers to the closest mineral to them
-//    // First we need to loop over all of the units that we (BWAPI::Broodwar->self()) own
-//    for (auto& unit : m_data.m_workers)
-//    {
-//        // Check the unit type, if it is an idle worker, then we want to send it somewhere
-//        if ( unit->isIdle())
-//        {
-//            // Get the closest mineral to this worker unit
-//            BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(unit, BWAPI::Broodwar->getMinerals());
-//
-//            // If a valid mineral was found, right click it with the unit in order to start harvesting
-//            if (closestMineral) { unit->rightClick(closestMineral); }
-//            m_data.m_workerJobMap[unit] = m_data.Minerals;
-//            /*m_data.m_workerMineralMap[unit] = closestMineral;*/
-//        }
-//    }
-//}
 
 // Send our idle workers to mine minerals so they don't just stand there
 void StarterBot::sendIdleWorkersToMinerals()
@@ -214,10 +174,12 @@ void StarterBot::drawDebugInformation()
 // Called whenever a unit is destroyed, with a pointer to the unit
 void StarterBot::onUnitDestroy(BWAPI::Unit unit)
 {
+    //if our scout is destroyed, reset one miner to scout mission
     if (unit == m_scout) {
         m_scout = m_data.get_a_miner();
         m_data.m_workerJobMap[m_scout] = m_data.Scout;
     }
+    //if a building is destroyed, we consider it as a front building and rebuild one
     if (unit->getType() == BWAPI::UnitTypes::Protoss_Pylon) {
         m_data.front_pylon = true;
         m_data.front_pylon_pos = m_data.front_pylon_pos_pre;
@@ -229,10 +191,11 @@ void StarterBot::onUnitDestroy(BWAPI::Unit unit)
     if (unit->getType() == BWAPI::UnitTypes::Protoss_Photon_Cannon) {
         m_data.front_canon--;
     }
+    //erase a worker from our data if it's destroyed
     if (unit->getType() == m_data.worker_type) {
         m_data.m_workerJobMap.erase(unit);
     }	
-
+    //if an enemy building is destroyed, erase it
     if (unit->getPlayer()->isEnemy(BWAPI::Broodwar->self()) == true) {
 
         if (unit->getType().isBuilding()) {
@@ -268,13 +231,14 @@ void StarterBot::onUnitCreate(BWAPI::Unit unit)
        
         m_data.m_workers.insert(unit);
         m_data.m_workerJobMap[unit] = m_data.Idle;
-        /*m_data.m_workerDepotMap[unit] = Tools::GetClosestUnitTo(unit, m_data.m_depots);*/
+        
     }
 }
 
 // Called whenever a unit finished construction, with a pointer to the unit
 void StarterBot::onUnitComplete(BWAPI::Unit unit)
-{
+{   
+    //Once the gas station is built, send three workers to it
     if (unit->getType().getID() == BWAPI::UnitTypes::Protoss_Assimilator.getID()) {
         for (int i = 0; i < 3; i++) {
             BWAPI::Unit gaser = m_data.get_a_miner(unit->getPosition());
@@ -288,6 +252,7 @@ void StarterBot::onUnitComplete(BWAPI::Unit unit)
         }
     }
     
+    //front policy: 
     if (unit->getType() == BWAPI::UnitTypes::Protoss_Pylon && m_data.front_pylon) {
         BWAPI::Broodwar->printf("New pylon position: %d, %d", unit->getTilePosition().x, unit->getTilePosition().y);
         if (unit->getDistance(BWAPI::Position(m_data.front_pylon_pos)) < 32 * 15) {
@@ -318,29 +283,20 @@ void StarterBot::onUnitComplete(BWAPI::Unit unit)
 // This is usually triggered when units appear from fog of war and become visible
 void StarterBot::onUnitShow(BWAPI::Unit unit)
 {
-
+    // if we can detect the enemy building, add it to list of enemy buildings
     if (unit->getPlayer()->isEnemy(BWAPI::Broodwar->self()) == true) {
-
-        //if (unit->getType().isBuilding() && m_data.detecte_enemy == false) {
         if (unit->getType().isBuilding()) {
             m_data.enemy_race = BWAPI::Broodwar->enemy()->getRace();
-            //m_data.enemy_building() = unit;
+            
             m_data.enemy_buildings[unit] = unit->getPosition();
 
             m_data.detecte_enemy = true;
-            //BWAPI::Position enemy_building()_pos = unit->getPosition();
-            //m_data.enemy_base() = unit->getPosition();
-            //BWAPI::Position scouter_pos = m_scout->getPosition();
+            
 
             BWAPI::Broodwar->printf("find enenmy base!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ");
             BWAPI::Broodwar->printf("%s ", m_scout->getLastCommand().getType().c_str());
 
-            //m_data.front_pylon_pos = BWAPI::TilePosition(BWAPI::Position(1.8 * scouter_pos.x - 0.8 * enemy_building()_pos.x, 1.8 * scouter_pos.y - 0.8 * enemy_building()_pos.y)).makeValid();
-           /* while (!m_mapTools.isBuildable(m_data.front_pylon_pos)) 
-            {
-                m_data.front_pylon_pos = BWAPI::TilePosition(BWAPI::Position(1.1 * m_data.front_pylon_pos.x - 0.1 * enemy_building()_pos.x, 1.1 * m_data.front_pylon_pos.y - 0.1 * enemy_building()_pos.y)).makeValid();
-            }*/
-            //m_scout->move(BWAPI::Position(1.8 * scouter_pos.x - 0.8 * enemy_building()_pos.x, 1.8 * scouter_pos.y - 0.8 * enemy_building()_pos.y));
+            
             if (!m_data.front_pylon) { m_scout->move(BWAPI::Position(m_data.home)); }
 
             if (unit->getType() == BWAPI::UnitTypes::Zerg_Sunken_Colony || unit->getType() == BWAPI::UnitTypes::Terran_Bunker) { m_data.groupSize = 9; }
@@ -367,27 +323,7 @@ void StarterBot::onUnitRenegade(BWAPI::Unit unit)
 	
 }
 
-
-//update
-//bool StarterBot::send1WorkerToGas()
-//{
-//    // Let's send all of our starting workers to the closest mineral to them
-//    // First we need to loop over all of the units that we (BWAPI::Broodwar->self()) own
-//    const BWAPI::Unit assimilator = Tools::GetUnitOfType(BWAPI::UnitTypes::Protoss_Assimilator);
-//    if (assimilator == nullptr) { return false; }
-//
-//    const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
-//    for (auto& unit : myUnits)
-//    {
-//        // Check the unit type, if it is an idle worker, then we want to send it somewhere
-//        if (unit->getType().isWorker())// �����ũ��һֱ��󣬾ͻ�ʲô������
-//        {
-//            unit->rightClick(assimilator);
-//            return true;
-//        }
-//    }
-//}
-
+//buidling, training strategies
 void StarterBot::initialStrategy() {
     building_order.push(make_pair(60, BWAPI::UnitTypes::Protoss_Cybernetics_Core));
     building_order.push(make_pair(60, BWAPI::UnitTypes::Protoss_Assimilator));
@@ -424,7 +360,8 @@ void StarterBot::initialStrategy() {
     train_order.push(make_pair(36, BWAPI::UnitTypes::Protoss_Dragoon));
     upgrade_order.push(make_pair(40, BWAPI::UpgradeTypes::Singularity_Charge));*/
 }
-//����
+
+//execute building policy, checked every frame
 void StarterBot::build() {
     const int supply = BWAPI::Broodwar->self()->supplyUsed();
     if (!building_order.empty()) {
@@ -445,21 +382,9 @@ void StarterBot::build() {
 }
 
 
+//execute training policy, checked every frame
 void StarterBot::train() {
     const int supply = BWAPI::Broodwar->self()->supplyUsed();
-    //if (!train_order.empty()) {
-    //    const p b1 = train_order.top();
-    //    if (supply >= b1.first && m_data.current_mineral()>b1.second.mineralPrice()) {//�˿ڹ���
-
-    //        const bool startedtrain = Tools::train_unit(b1.second);// ���ؽ����Ƿ�ʼ����
-    //        if (startedtrain)
-    //        {
-    //            BWAPI::Broodwar->printf("Started train %s", b1.second.getName().c_str());
-    //            train_order.pop(); //��������Ӷ������ӵ�
-    //        }
-
-    //    }
-    //}
     if (supply > 20 && supply < 80 && m_data.current_mineral() > BWAPI::UnitTypes::Protoss_Zealot.mineralPrice()) {
         const bool startedtrain = Tools::train_unit(BWAPI::UnitTypes::Protoss_Zealot);
         if (startedtrain)
@@ -485,6 +410,7 @@ void StarterBot::train() {
 }
 
 
+//execute upgrade policy, checked every frame
 void StarterBot::upgrade() {
     const int supply = BWAPI::Broodwar->self()->supplyUsed();
     if (!upgrade_order.empty()) {
@@ -494,13 +420,14 @@ void StarterBot::upgrade() {
             if (startedupgrade)
             {
                 //BWAPI::Broodwar->printf("Started upgrade %s", b1.second.getName().c_str());
-                upgrade_order.pop(); //��������Ӷ������ӵ�
+                upgrade_order.pop(); 
             }
 
         }
     }
 }
 
+//check for front 
 void StarterBot::check() {
     if (m_data.detecte_enemy && !m_data.front_pylon)
     {
@@ -510,10 +437,33 @@ void StarterBot::check() {
         m_data.front_pylon_pos = m_scout->getTilePosition();//update
         }
     }
+    if (BWAPI::Broodwar->self()->supplyUsed() > 10 && !m_data.detecte_enemy) { StarterBot::sendScout(); }
+    
+
+    BWAPI::Unitset targets = BWAPI::Broodwar->enemy()->getUnits();
+
+    //m_meleeManager.Strategy(BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation()), m_data.enemy_base(), 80);
+    
+    m_meleeManager.defendBase(BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation()));
+
+    if (m_data.front_pylon) { m_meleeManager.setRallyPoint(BWAPI::Position(m_data.front_pylon_pos)); }
+    //else { m_meleeManager.setRallyPoint(BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation())); }
+
+    AttackGroup attackGp = m_meleeManager.getCombatGroup(m_data.CombatRallyPoint, 128 * 32, m_data.groupSize);
+    //BWAPI::BroodwarPtr->printf("Attack group formed: %d", attackGp.size());
+    m_meleeManager.combatCenter.update();
+
+    if (attackGp.size() == m_data.groupSize) { 
+        m_meleeManager.combatCenter.addCombatUnit(attackGp);
+        m_meleeManager.attackBase(attackGp, m_data.enemy_base()); }
+    for (AttackGroup gp : m_meleeManager.combatCenter.getGroups()) {
+        if(gp.size() > 0){ m_meleeManager.attackBase(gp, m_data.enemy_base()); }      
+    }
 
     
 }
 
+//set unit to be scout unit
 void StarterBot::setScout(BWAPI::Unit unit) 
 {
     if (m_scout)
@@ -524,18 +474,12 @@ void StarterBot::setScout(BWAPI::Unit unit)
     m_data.m_workerJobMap[unit] = m_data.Scout;
 }
 
+
+//send a worker as scouter to look up all the locations offered by BWAPI
 void StarterBot::sendScout()
 {
     if (!m_scout||!m_scout->exists())
     {
-        /*const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
-        for (auto& unit : myUnits)
-        {
-            if (unit->getType().isWorker()) 
-            {
-                StarterBot::setScout(unit);
-            }
-        }*/
         StarterBot::setScout(m_data.get_a_miner());
 
     }
@@ -558,6 +502,11 @@ void StarterBot::sendScout()
     }
 }
 
+/*Our front strategy: 
+1.once detect enemy, calculate the front pylon position
+2.build first pylon, gateway and canons
+3.iterate to build more and more pylon, canons to approach the enemy buildings
+*/
 void StarterBot::front_strategy() {
     if (m_data.detecte_enemy) {
         BWAPI::Broodwar->printf("FrontPylonTilePosition : %d,%d", m_data.front_pylon_pos.x, m_data.front_pylon_pos.y);
@@ -626,6 +575,8 @@ void StarterBot::front_strategy() {
     }
 }
 
+
+//build a building of type type
 bool StarterBot::BuildBuilding(BWAPI::UnitType type)
 {
     // Get the type of unit that is required to build the desired building

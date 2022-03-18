@@ -16,66 +16,22 @@ Data::Data() {
  
 }
 
-void Data::update() {
-    m_workers = Tools::GetAllUnitOfType(worker_type);
-    m_depots = Tools::GetAllUnitOfType(depot_type);
-    m_minerals = BWAPI::Broodwar->getMinerals();
-
-    for (auto worker : m_workers) {
-        m_workerJobMap[worker] = Idle;
-        /*m_workerDepotMap[worker] = Tools::GetClosestUnitTo(worker, m_depots);*/
-    }
-
-}
-
-void Data::workerDestroyed(BWAPI::Unit unit)
-{
-    if (!unit) { return; }
-
-    clearPreviousJob(unit);
-    m_workers.erase(unit);
-}
-
+//Clear the previous job of a worker and set it to idle
 void Data::clearPreviousJob(BWAPI::Unit unit)
 {
     if (!unit) { return; }
 
     WorkerJob previousJob = getWorkerJob(unit);
 
-    if (previousJob == Minerals)
-    {
-        /*m_depotWorkerCount[m_workerDepotMap[unit]] -= 1;*/
-
-        /*m_workerDepotMap.erase(unit);*/
-
-        // remove a worker from this unit's assigned mineral patch
-        //addToMineralPatch(m_workerMineralAssignment[unit], -1);
-
-        // erase the association from the map
-        //m_workerMineralAssignment.erase(unit);
-    }
-    else if (previousJob == Gas)
-    {
-        //m_refineryWorkerCount[m_workerRefineryMap[unit]] -= 1;
-        /*m_workerRefineryMap.erase(unit);*/
-    }
-    else if (previousJob == Build)
+    if (previousJob == Build)
     {
         m_workerBuildingTypeMap.erase(unit);
     }
-    //else if (previousJob == Repair)
-    //{
-    //    m_workerRepairMap.erase(unit);
-    //}
-    //else if (previousJob == Move)
-    //{
-    //    m_workerMoveMap.erase(unit);
-    //}
 
     m_workerJobMap.erase(unit);
 }
 
-
+//get the job of a worker
 enum Data::WorkerJob Data::getWorkerJob(BWAPI::Unit unit)
 {
     if (!unit) { return Default; }
@@ -90,13 +46,9 @@ enum Data::WorkerJob Data::getWorkerJob(BWAPI::Unit unit)
     return Default;
 }
 
+//get a woker who is mining who is closest to position pos
 BWAPI::Unit Data::get_a_miner(BWAPI::Position pos) {
 
-    /*BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(pos, BWAPI::Broodwar->getMinerals());*/
-    /*if (closestMineral == nullptr) {
-        BWAPI::Broodwar->printf("Can't find mineral!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ");
-
-    }*/
     int k = 0;
     for (auto x : m_workerJobMap) {
         k = k + 1;
@@ -108,13 +60,9 @@ BWAPI::Unit Data::get_a_miner(BWAPI::Position pos) {
     return nullptr;
 }
 
+//get a random miner
 BWAPI::Unit Data::get_a_miner() {
 
-    /*BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(pos, BWAPI::Broodwar->getMinerals());*/
-    /*if (closestMineral == nullptr) {
-        BWAPI::Broodwar->printf("Can't find mineral!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ");
-
-    }*/
     int k = 0;
     for (auto x : m_workerJobMap) {
         k = k + 1;
@@ -126,11 +74,15 @@ BWAPI::Unit Data::get_a_miner() {
     return nullptr;
 }
 
+
+//get the current mineral that can be used: the current mineral offered by the BWAPI - mineral distributed to build buildings(distributed but not used because the worker is on the way)
 int Data::current_mineral() {
 
     return  BWAPI::Broodwar->self()->minerals() - current_minus_mineral;
 }
 
+
+//get the closest enemy building to attack
 BWAPI::Unit Data::enemy_building() {
     BWAPI::Unit closestUnit = nullptr;
 
@@ -141,11 +93,11 @@ BWAPI::Unit Data::enemy_building() {
             closestUnit = it->first;
         }
     }
-
     return closestUnit;
 
 }
 
+//get the position of the closest enemy building
 BWAPI::Position Data::enemy_base() {
     BWAPI::Unit closestUnit = nullptr;
 
