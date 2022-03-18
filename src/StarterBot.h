@@ -43,7 +43,6 @@ public:
 	void train();
 	void check();
 	void upgrade();
-	/*bool send1WorkerToGas();*/
 	void setScout(BWAPI::Unit unit);
 	void sendScout();
 	void front_strategy(); // to be modified by using MapTools::isBuildable();
