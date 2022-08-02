@@ -1,2 +1,1 @@
-# zz
-ai for starcraft
+# ai for starcraft
